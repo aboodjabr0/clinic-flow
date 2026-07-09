@@ -1,0 +1,73 @@
+.visit-details-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.visit-details-actions {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.visit-details-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: var(--space-5);
+}
+
+.visit-details-title {
+  font-size: 20px;
+  color: var(--color-text-primary);
+}
+
+.visit-details-subtitle {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  margin-top: var(--space-1);
+}
+
+.visit-details-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--space-4);
+}
+
+.visit-details-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.visit-details-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
+.visit-details-value {
+  font-size: 14px;
+  color: var(--color-text-primary);
+}
+
+.visit-details-notes {
+  font-size: 14px;
+  color: var(--color-text-primary);
+  white-space: pre-wrap;
+}
+
+.visit-details-note-caption {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-2);
+}
+
+.visit-details-form-note {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.visit-details-form-error {
+  font-size: 13px;
+  color: var(--color-danger);
+}

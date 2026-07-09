@@ -1,0 +1,53 @@
+.patients-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: var(--space-4);
+  margin-bottom: var(--space-5);
+}
+
+.patients-filters {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.patients-table-actions {
+  display: flex;
+  gap: var(--space-2);
+  justify-content: flex-end;
+}
+
+.patients-result-count {
+  padding-top: var(--space-4);
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  text-align: center;
+}
+
+.patients-form-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+}
+
+.patients-form-section legend {
+  padding: 0 var(--space-2);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
+.patients-form-error {
+  font-size: 13px;
+  color: var(--color-danger);
+}
+
+@media (max-width: 640px) {
+  .patients-filters {
+    grid-template-columns: 1fr;
+  }
+}

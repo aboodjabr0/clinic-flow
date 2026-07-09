@@ -1,0 +1,136 @@
+/*
+ * Design tokens.
+ *
+ * Structural tokens (spacing, radius, sizes, typography) live in :root and are
+ * theme-independent. Colors live in the html[data-theme="..."] blocks so the
+ * whole app re-themes from a single attribute on <html>.
+ *
+ * IMPORTANT: light-mode color values are unchanged from the original palette,
+ * so existing screens look identical in light mode. Dark mode is additive.
+ */
+
+:root {
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, Helvetica, Arial, sans-serif;
+
+  --sidebar-width: 260px;
+  --sidebar-width-collapsed: 76px;
+  --topbar-height: 64px;
+
+  --transition-fast: 150ms ease;
+}
+
+/* ---------------------------------------------------------------- Light -- */
+html[data-theme="light"] {
+  color-scheme: light;
+
+  /* Surfaces */
+  --color-bg: #f6f8fa;
+  --color-surface: #ffffff;
+  --color-surface-elevated: #ffffff;
+  --color-card: #ffffff;
+  --color-input-bg: #ffffff;
+  --color-sidebar-bg: #ffffff;
+  --color-topbar-bg: #ffffff;
+  --color-neutral-bg: #f1f3f5;
+  --color-table-hover: #f4f7f9;
+
+  /* Borders */
+  --color-border: #e4e9ef;
+  --color-border-strong: #d3dae3;
+
+  /* Text */
+  --color-text-primary: #101828;
+  --color-text-secondary: #5b6472;
+  --color-text-muted: #8a93a1;
+
+  /* Accent */
+  --color-accent: #0d9488;
+  --color-accent-hover: #0f766e;
+  --color-accent-light: #e6f7f5;
+  --color-accent-soft: #e6f7f5;
+  --color-accent-contrast: #ffffff;
+  --color-accent-blue: #2563eb;
+
+  /* Status */
+  --color-success: #15803d;
+  --color-success-bg: #ecfdf3;
+  --color-warning: #b45309;
+  --color-warning-bg: #fffaeb;
+  --color-danger: #b91c1c;
+  --color-danger-hover: #991b1b;
+  --color-danger-bg: #fef3f2;
+  --color-danger-solid: #dc2626;
+  --color-danger-solid-hover: #b91c1c;
+  --color-info: #1d4ed8;
+  --color-info-bg: #eff6ff;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.06);
+  --shadow-md: 0 4px 12px rgba(16, 24, 40, 0.08);
+  --shadow-lg: 0 12px 28px rgba(16, 24, 40, 0.12);
+  --overlay-bg: rgba(16, 24, 40, 0.45);
+}
+
+/* ----------------------------------------------------------------- Dark -- */
+html[data-theme="dark"] {
+  color-scheme: dark;
+
+  /* Surfaces — slate/navy, never pure black; cards sit above the page */
+  --color-bg: #0f172a;
+  --color-surface: #1e293b;
+  --color-surface-elevated: #24324a;
+  --color-card: #1e293b;
+  --color-input-bg: #16202f;
+  --color-sidebar-bg: #111c30;
+  --color-topbar-bg: #111c30;
+  --color-neutral-bg: #273449;
+  --color-table-hover: #273449;
+
+  /* Borders */
+  --color-border: #334155;
+  --color-border-strong: #475569;
+
+  /* Text — kept high-contrast against slate surfaces */
+  --color-text-primary: #f1f5f9;
+  --color-text-secondary: #b4c0d3;
+  --color-text-muted: #8595ac;
+
+  /* Accent — brighter teal reads better on dark; contrast is dark for text on accent */
+  --color-accent: #2dd4bf;
+  --color-accent-hover: #5eead4;
+  --color-accent-light: rgba(45, 212, 191, 0.16);
+  --color-accent-soft: rgba(45, 212, 191, 0.16);
+  --color-accent-contrast: #06231f;
+  --color-accent-blue: #60a5fa;
+
+  /* Status — translucent tints keep badges legible on dark cards */
+  --color-success: #4ade80;
+  --color-success-bg: rgba(34, 197, 94, 0.16);
+  --color-warning: #fbbf24;
+  --color-warning-bg: rgba(245, 158, 11, 0.16);
+  --color-danger: #f87171;
+  --color-danger-hover: #ef4444;
+  --color-danger-bg: rgba(239, 68, 68, 0.16);
+  --color-danger-solid: #dc2626;
+  --color-danger-solid-hover: #ef4444;
+  --color-info: #60a5fa;
+  --color-info-bg: rgba(59, 130, 246, 0.16);
+
+  /* Shadows — deeper, since elevation reads via shadow depth on dark */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 6px 18px rgba(0, 0, 0, 0.45);
+  --shadow-lg: 0 16px 32px rgba(0, 0, 0, 0.55);
+  --overlay-bg: rgba(2, 6, 16, 0.6);
+}

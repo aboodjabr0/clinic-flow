@@ -1,0 +1,90 @@
+.patient-details-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.patient-details-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: var(--space-5);
+}
+
+.patient-details-name {
+  font-size: 20px;
+  color: var(--color-text-primary);
+}
+
+.patient-details-subtitle {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  margin-top: var(--space-1);
+}
+
+.patient-details-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--space-4);
+}
+
+.patient-details-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.patient-details-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
+.patient-details-value {
+  font-size: 14px;
+  color: var(--color-text-primary);
+}
+
+.patient-details-notes {
+  font-size: 14px;
+  color: var(--color-text-primary);
+  white-space: pre-wrap;
+}
+
+.patient-details-appointments {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.patient-details-appointment-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.patient-details-appointment-row:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.patient-details-visit-row {
+  cursor: pointer;
+}
+
+.patient-details-appointment-date {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.patient-details-appointment-meta {
+  display: block;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  margin-top: 2px;
+}

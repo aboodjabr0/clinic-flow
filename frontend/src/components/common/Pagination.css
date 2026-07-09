@@ -1,0 +1,12 @@
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  padding-top: var(--space-4);
+}
+
+.pagination-label {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}

@@ -1,0 +1,14 @@
+namespace ClinicFlow.Api.DTOs.Visits;
+
+/// <summary>Bound from query string parameters on GET /api/visits.</summary>
+public class VisitQueryDto
+{
+    public string? Search { get; init; }
+    public Guid? PatientId { get; init; }
+    public Guid? DoctorId { get; init; }
+    public string? Status { get; init; }
+    public DateOnly? FromDate { get; init; }
+    public DateOnly? ToDate { get; init; }
+    public int PageNumber { get; init; } = 1;
+    public int PageSize { get; init; } = 10;
+}

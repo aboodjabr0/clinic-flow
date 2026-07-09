@@ -1,0 +1,65 @@
+.appointments-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: var(--space-4);
+  margin-bottom: var(--space-5);
+}
+
+.appointments-patient-filter-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  margin-bottom: var(--space-4);
+  background: var(--color-neutral-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+.appointments-filters {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr auto auto;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+  align-items: start;
+}
+
+.appointments-table-actions {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.appointments-status-select {
+  min-width: 130px;
+  padding: var(--space-1) var(--space-2);
+  font-size: 13px;
+}
+
+.appointments-result-count {
+  padding-top: var(--space-4);
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  text-align: center;
+}
+
+.appointments-form-error {
+  font-size: 13px;
+  color: var(--color-danger);
+}
+
+@media (max-width: 900px) {
+  .appointments-filters {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .appointments-filters {
+    grid-template-columns: 1fr;
+  }
+}
