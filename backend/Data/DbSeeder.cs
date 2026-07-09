@@ -21,7 +21,19 @@ public static class DbSeeder
 
     public static async Task SeedDevelopmentAdminAsync(AppDbContext context, IPasswordHasher<AppUser> passwordHasher)
     {
-        var alreadySeeded = await context.AppUsers.AnyAsync(u => u.Email == AdminEmail);
+        var email = Environment.GetEnvironmentVariable("SEED_ADMIN_EMAIL");
+        if (string.IsNullOrWhiteSpace(email))
+        {
+            email = AdminEmail;
+        }
+
+        var fullName = Environment.GetEnvironmentVariable("SEED_ADMIN_NAME");
+        if (string.IsNullOrWhiteSpace(fullName))
+        {
+            fullName = "ClinicFlow Admin";
+        }
+
+        var alreadySeeded = await context.AppUsers.AnyAsync(u => u.Email == email);
         if (alreadySeeded)
         {
             return;
@@ -36,8 +48,8 @@ public static class DbSeeder
         var admin = new AppUser
         {
             Id = Guid.NewGuid(),
-            FullName = "ClinicFlow Admin",
-            Email = AdminEmail,
+            FullName = fullName,
+            Email = email,
             Role = UserRole.Admin,
             IsActive = true,
             CreatedAtUtc = DateTime.UtcNow,

@@ -20,6 +20,11 @@ var frontendUrl = builder.Configuration["Frontend:Url"] ?? "http://localhost:517
 var connectionString = ResolveConnectionString(builder.Configuration);
 var jwtSigningKey = JwtKeyResolver.Resolve(builder.Configuration, builder.Environment);
 
+var corsAllowedOriginsSetting = Environment.GetEnvironmentVariable("CORS_ALLOWED_ORIGINS");
+var corsAllowedOrigins = string.IsNullOrWhiteSpace(corsAllowedOriginsSetting)
+    ? new[] { frontendUrl }
+    : corsAllowedOriginsSetting.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
 builder.Services.AddControllers()
     .ConfigureApiBehaviorOptions(options =>
     {
@@ -70,7 +75,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy(FrontendCorsPolicy, policy =>
     {
-        policy.WithOrigins(frontendUrl)
+        policy.WithOrigins(corsAllowedOrigins)
             .AllowAnyHeader()
             .AllowAnyMethod();
     });
@@ -134,23 +139,36 @@ var app = builder.Build();
 
 app.UseMiddleware<ErrorHandlingMiddleware>();
 
-if (app.Environment.IsDevelopment())
+app.UseSwagger();
+app.UseSwaggerUI(options =>
 {
-    app.UseSwagger();
-    app.UseSwaggerUI(options =>
-    {
-        options.SwaggerEndpoint("/swagger/v1/swagger.json", "ClinicFlow API v1");
-    });
+    options.SwaggerEndpoint("/swagger/v1/swagger.json", "ClinicFlow API v1");
+});
 
+var applyMigrationsOnStartup = Environment.GetEnvironmentVariable("APPLY_MIGRATIONS_ON_STARTUP") == "true";
+var enableDemoSeeding = app.Environment.IsDevelopment()
+    || Environment.GetEnvironmentVariable("ENABLE_DEMO_SEEDING") == "true";
+
+if (applyMigrationsOnStartup || enableDemoSeeding)
+{
     using var scope = app.Services.CreateScope();
     var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    var passwordHasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher<AppUser>>();
-    await DbSeeder.SeedDevelopmentAdminAsync(dbContext, passwordHasher);
-    await DbSeeder.SeedDentalClinicCoreSetupAsync(dbContext, passwordHasher);
-    await DbSeeder.SeedDemoPatientsAsync(dbContext);
-    await DbSeeder.SeedDemoAppointmentsAsync(dbContext);
-    await DbSeeder.SeedDemoVisitsAsync(dbContext);
-    await DbSeeder.SeedDemoInvoicesAsync(dbContext);
+
+    if (applyMigrationsOnStartup)
+    {
+        await dbContext.Database.MigrateAsync();
+    }
+
+    if (enableDemoSeeding)
+    {
+        var passwordHasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher<AppUser>>();
+        await DbSeeder.SeedDevelopmentAdminAsync(dbContext, passwordHasher);
+        await DbSeeder.SeedDentalClinicCoreSetupAsync(dbContext, passwordHasher);
+        await DbSeeder.SeedDemoPatientsAsync(dbContext);
+        await DbSeeder.SeedDemoAppointmentsAsync(dbContext);
+        await DbSeeder.SeedDemoVisitsAsync(dbContext);
+        await DbSeeder.SeedDemoInvoicesAsync(dbContext);
+    }
 }
 
 app.UseCors(FrontendCorsPolicy);
@@ -161,13 +179,19 @@ app.MapControllers();
 app.Run();
 
 /// <summary>
-/// Builds the Postgres connection string from individual environment
-/// variables (DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD) when set,
-/// falling back to ConnectionStrings:Default from appsettings for cases
-/// where a full connection string is provided directly.
+/// Resolves the Postgres connection string, preferring a full connection
+/// string from ConnectionStrings__DefaultConnection, then individual
+/// environment variables (DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD),
+/// then ConnectionStrings:Default from appsettings.
 /// </summary>
 static string ResolveConnectionString(IConfiguration configuration)
 {
+    var directConnectionString = configuration.GetConnectionString("DefaultConnection");
+    if (!string.IsNullOrWhiteSpace(directConnectionString))
+    {
+        return directConnectionString;
+    }
+
     var host = Environment.GetEnvironmentVariable("DB_HOST");
     var port = Environment.GetEnvironmentVariable("DB_PORT");
     var name = Environment.GetEnvironmentVariable("DB_NAME");
