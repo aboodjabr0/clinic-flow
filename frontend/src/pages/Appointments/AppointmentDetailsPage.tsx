@@ -15,9 +15,10 @@ import { visitsApi } from "../../api/visitsApi";
 import { invoicesApi } from "../../api/invoicesApi";
 import { ApiError } from "../../api/apiClient";
 import { useAuth } from "../../context/AuthContext";
+import { useTranslation } from "../../i18n/useTranslation";
 import { formatDate } from "../../utils/patient";
-import { APPOINTMENT_STATUS_LABELS, APPOINTMENT_STATUS_VARIANTS } from "../../utils/appointment";
-import { VISIT_STATUS_LABELS, VISIT_STATUS_VARIANTS } from "../../utils/visit";
+import { APPOINTMENT_STATUS_LABEL_KEYS, APPOINTMENT_STATUS_VARIANTS } from "../../utils/appointment";
+import { VISIT_STATUS_LABEL_KEYS, VISIT_STATUS_VARIANTS } from "../../utils/visit";
 import type { Appointment } from "../../types/appointment";
 import type { Visit } from "../../types/visit";
 import type { Invoice } from "../../types/invoice";
@@ -46,6 +47,7 @@ export function AppointmentDetailsPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { hasAnyRole } = useAuth();
+  const { t } = useTranslation();
   const canManageVisits = hasAnyRole(["Admin", "Doctor"]);
   const canManageInvoices = hasAnyRole(["Admin", "Receptionist"]);
 
@@ -68,10 +70,10 @@ export function AppointmentDetailsPage() {
       setAppointment(response.data);
       setView({ status: "loaded" });
     } catch (error) {
-      const message = error instanceof ApiError ? error.message : "Unable to reach the API.";
+      const message = error instanceof ApiError ? error.message : t("appointmentDetails.errorReachApi");
       setView({ status: "error", message });
     }
-  }, [id]);
+  }, [id, t]);
 
   const loadVisit = useCallback(async () => {
     if (!id) return;
@@ -86,10 +88,10 @@ export function AppointmentDetailsPage() {
       }
       setVisitView({
         status: "error",
-        message: error instanceof ApiError ? error.message : "Unable to load visit record.",
+        message: error instanceof ApiError ? error.message : t("appointmentDetails.errorLoadVisit"),
       });
     }
-  }, [id]);
+  }, [id, t]);
 
   useEffect(() => {
     loadAppointment();
@@ -112,10 +114,10 @@ export function AppointmentDetailsPage() {
       }
       setInvoiceView({
         status: "error",
-        message: error instanceof ApiError ? error.message : "Unable to load invoice.",
+        message: error instanceof ApiError ? error.message : t("appointmentDetails.errorLoadInvoice"),
       });
     }
-  }, [id]);
+  }, [id, t]);
 
   useEffect(() => {
     loadInvoice();
@@ -143,7 +145,7 @@ export function AppointmentDetailsPage() {
       setIsStartModalOpen(false);
       navigate(`/visits/${response.data.id}`);
     } catch (error) {
-      setStartError(error instanceof ApiError ? error.message : "Unable to start visit.");
+      setStartError(error instanceof ApiError ? error.message : t("appointmentDetails.errorStartVisit"));
     } finally {
       setIsStarting(false);
     }
@@ -152,24 +154,24 @@ export function AppointmentDetailsPage() {
   return (
     <>
       <PageHeader
-        title="Appointment Details"
-        subtitle="View appointment information."
+        title={t("appointmentDetails.title")}
+        subtitle={t("appointmentDetails.subtitle")}
         actions={
           <Button variant="secondary" onClick={() => navigate("/appointments")}>
-            Back to Appointments
+            {t("appointmentDetails.backToAppointments")}
           </Button>
         }
       />
 
       {view.status === "loading" && (
         <Card>
-          <LoadingState label="Loading appointment..." />
+          <LoadingState label={t("appointmentDetails.loading")} />
         </Card>
       )}
 
       {view.status === "error" && (
         <Card>
-          <EmptyState title="Unable to load appointment" description={view.message} />
+          <EmptyState title={t("appointmentDetails.unableToLoad")} description={view.message} />
         </Card>
       )}
 
@@ -179,52 +181,55 @@ export function AppointmentDetailsPage() {
             <div className="appointment-details-header">
               <div>
                 <h2 className="appointment-details-title">
-                  {appointment.serviceName} with {appointment.doctorFullName}
+                  {t("appointmentDetails.serviceWithDoctor", {
+                    service: appointment.serviceName,
+                    doctor: appointment.doctorFullName,
+                  })}
                 </h2>
                 <p className="appointment-details-subtitle">
                   {formatDate(appointment.appointmentDate)} · {appointment.startTime} - {appointment.endTime}
                 </p>
               </div>
               <StatusBadge
-                label={APPOINTMENT_STATUS_LABELS[appointment.status]}
+                label={t(APPOINTMENT_STATUS_LABEL_KEYS[appointment.status])}
                 variant={APPOINTMENT_STATUS_VARIANTS[appointment.status]}
               />
             </div>
 
             <div className="appointment-summary-meta">
               <section className="appointment-meta-group">
-                <h3 className="appointment-meta-group-title">Patient</h3>
+                <h3 className="appointment-meta-group-title">{t("appointmentDetails.sectionPatient")}</h3>
                 <div className="appointment-meta-list">
                   <div className="appointment-details-field">
-                    <span className="appointment-details-label">Name</span>
+                    <span className="appointment-details-label">{t("appointmentDetails.name")}</span>
                     <span className="appointment-details-value">{appointment.patientFullName}</span>
                   </div>
                   <div className="appointment-details-field">
-                    <span className="appointment-details-label">Phone</span>
+                    <span className="appointment-details-label">{t("appointmentDetails.phone")}</span>
                     <span className="appointment-details-value">{appointment.patientPhoneNumber}</span>
                   </div>
                 </div>
               </section>
 
               <section className="appointment-meta-group">
-                <h3 className="appointment-meta-group-title">Appointment</h3>
+                <h3 className="appointment-meta-group-title">{t("appointmentDetails.sectionAppointment")}</h3>
                 <div className="appointment-meta-list">
                   <div className="appointment-details-field">
-                    <span className="appointment-details-label">Doctor</span>
+                    <span className="appointment-details-label">{t("appointmentDetails.name")}</span>
                     <span className="appointment-details-value">{appointment.doctorFullName}</span>
                   </div>
                   <div className="appointment-details-field">
-                    <span className="appointment-details-label">Service</span>
+                    <span className="appointment-details-label">{t("table.service")}</span>
                     <span className="appointment-details-value">
                       {appointment.serviceName} ({appointment.servicePrice.toFixed(2)})
                     </span>
                   </div>
                   <div className="appointment-details-field">
-                    <span className="appointment-details-label">Created</span>
+                    <span className="appointment-details-label">{t("table.created")}</span>
                     <span className="appointment-details-value">{formatDate(appointment.createdAtUtc)}</span>
                   </div>
                   <div className="appointment-details-field">
-                    <span className="appointment-details-label">Last updated</span>
+                    <span className="appointment-details-label">{t("appointmentDetails.lastUpdated")}</span>
                     <span className="appointment-details-value">{formatDate(appointment.updatedAtUtc)}</span>
                   </div>
                 </div>
@@ -233,96 +238,98 @@ export function AppointmentDetailsPage() {
           </Card>
 
           <div className="appointment-details-notes-grid">
-            <Card title="Reason">
-              <p className="appointment-details-notes">{appointment.reason ?? "No reason recorded."}</p>
+            <Card title={t("appointmentDetails.reason")}>
+              <p className="appointment-details-notes">{appointment.reason ?? t("appointmentDetails.noReason")}</p>
             </Card>
 
-            <Card title="Notes">
-              <p className="appointment-details-notes">{appointment.notes ?? "No notes recorded."}</p>
+            <Card title={t("appointmentDetails.notes")}>
+              <p className="appointment-details-notes">{appointment.notes ?? t("appointmentDetails.noNotes")}</p>
             </Card>
           </div>
 
           {appointment.status === "Cancelled" && (
-            <Card title="Cancellation Reason">
-              <p className="appointment-details-notes">{appointment.cancellationReason ?? "No reason recorded."}</p>
+            <Card title={t("appointmentDetails.cancellationReason")}>
+              <p className="appointment-details-notes">
+                {appointment.cancellationReason ?? t("appointmentDetails.noCancellationReason")}
+              </p>
             </Card>
           )}
 
           <div className="appointment-details-placeholders">
             <Card
-              title="Visit Record"
+              title={t("appointmentDetails.visitRecord")}
               actions={
                 visitView.status === "none" && canManageVisits && STARTABLE_APPOINTMENT_STATUSES.includes(appointment.status) ? (
                   <Button variant="secondary" onClick={openStartModal}>
-                    Start Visit
+                    {t("appointmentDetails.startVisit")}
                   </Button>
                 ) : undefined
               }
             >
-              {visitView.status === "loading" && <LoadingState label="Loading visit record..." />}
+              {visitView.status === "loading" && <LoadingState label={t("appointmentDetails.loadingVisitRecord")} />}
 
               {visitView.status === "error" && (
-                <EmptyState title="Unable to load visit record" description={visitView.message} />
+                <EmptyState title={t("appointmentDetails.unableToLoadVisitRecord")} description={visitView.message} />
               )}
 
               {visitView.status === "found" && (
                 <div className="appointment-details-visit-summary">
                   <StatusBadge
-                    label={VISIT_STATUS_LABELS[visitView.visit.status]}
+                    label={t(VISIT_STATUS_LABEL_KEYS[visitView.visit.status])}
                     variant={VISIT_STATUS_VARIANTS[visitView.visit.status]}
                   />
                   <p className="appointment-details-notes">
-                    {visitView.visit.chiefComplaint ?? "No chief complaint recorded."}
+                    {visitView.visit.chiefComplaint ?? t("appointmentDetails.noChiefComplaint")}
                   </p>
                   <Button variant="ghost" onClick={() => navigate(`/visits/${visitView.visit.id}`)}>
-                    View Visit
+                    {t("appointmentDetails.viewVisit")}
                   </Button>
                 </div>
               )}
 
               {visitView.status === "none" && appointment.status === "Completed" && (
                 <EmptyState
-                  title="No visit record exists"
-                  description="This appointment was completed without a visit record."
+                  title={t("appointmentDetails.noVisitRecordTitle")}
+                  description={t("appointmentDetails.noVisitRecordDescription")}
                 />
               )}
 
               {visitView.status === "none" && appointment.status !== "Completed" && (
                 <EmptyState
-                  title="No visit started yet"
+                  title={t("appointmentDetails.noVisitStartedTitle")}
                   description={
                     canManageVisits && STARTABLE_APPOINTMENT_STATUSES.includes(appointment.status)
-                      ? "Start a visit to record clinical notes and prescriptions."
-                      : "A visit has not been started for this appointment."
+                      ? t("appointmentDetails.noVisitStartedDescription")
+                      : t("appointmentDetails.noVisitStartedFallback")
                   }
                 />
               )}
             </Card>
             <Card
-              title="Invoice"
+              title={t("appointmentDetails.invoice")}
               actions={
                 invoiceView.status === "none" && canManageInvoices ? (
                   <Button variant="secondary" onClick={() => setIsCreateInvoiceModalOpen(true)}>
-                    Create Invoice
+                    {t("appointmentDetails.createInvoice")}
                   </Button>
                 ) : undefined
               }
             >
-              {invoiceView.status === "loading" && <LoadingState label="Loading invoice..." />}
+              {invoiceView.status === "loading" && <LoadingState label={t("appointmentDetails.loadingInvoice")} />}
 
               {invoiceView.status === "error" && (
-                <EmptyState title="Unable to load invoice" description={invoiceView.message} />
+                <EmptyState title={t("appointmentDetails.unableToLoadInvoice")} description={invoiceView.message} />
               )}
 
               {invoiceView.status === "found" && <InvoiceSummaryCard invoice={invoiceView.invoice} />}
 
               {invoiceView.status === "none" && (
                 <EmptyState
-                  title="No invoice yet"
+                  title={t("appointmentDetails.noInvoiceTitle")}
                   description={
                     canManageInvoices
-                      ? "Create an invoice for this appointment."
-                      : "An invoice has not been created for this appointment."
+                      ? t("appointmentDetails.noInvoiceDescription")
+                      : t("appointmentDetails.noInvoiceFallback")
                   }
                 />
               )}
@@ -350,23 +357,21 @@ export function AppointmentDetailsPage() {
         />
       )}
 
-      <Modal isOpen={isStartModalOpen} title="Start Visit" onClose={closeStartModal}>
+      <Modal isOpen={isStartModalOpen} title={t("appointmentDetails.startVisitModalTitle")} onClose={closeStartModal}>
         <form className="modal-form" onSubmit={handleStartVisit}>
-          <p className="appointment-details-notes">
-            This creates a visit record and sets the appointment status to In Progress.
-          </p>
+          <p className="appointment-details-notes">{t("appointmentDetails.startVisitModalText")}</p>
           <Textarea
-            label="Chief complaint (optional)"
+            label={t("appointmentDetails.chiefComplaintOptional")}
             value={chiefComplaint}
             onChange={(e) => setChiefComplaint(e.target.value)}
           />
           {startError && <p className="appointment-details-form-error">{startError}</p>}
           <div className="modal-actions">
             <Button type="button" variant="secondary" onClick={closeStartModal} disabled={isStarting}>
-              Cancel
+              {t("common.cancel")}
             </Button>
             <Button type="submit" disabled={isStarting}>
-              {isStarting ? "Starting..." : "Start Visit"}
+              {isStarting ? t("appointmentDetails.starting") : t("appointmentDetails.startVisit")}
             </Button>
           </div>
         </form>

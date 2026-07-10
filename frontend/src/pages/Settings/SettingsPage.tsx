@@ -7,6 +7,7 @@ import { Button } from "../../components/common/Button";
 import { Input } from "../../components/common/Input";
 import { clinicSettingsApi } from "../../api/clinicSettingsApi";
 import { ApiError } from "../../api/apiClient";
+import { useTranslation } from "../../i18n/useTranslation";
 import type { UpdateClinicSettingsRequest } from "../../types/clinicSettings";
 import "./SettingsPage.css";
 
@@ -26,6 +27,7 @@ const EMPTY_FORM: UpdateClinicSettingsRequest = {
 };
 
 export function SettingsPage() {
+  const { t } = useTranslation();
   const [view, setView] = useState<ViewState>({ status: "loading" });
   const [form, setForm] = useState<UpdateClinicSettingsRequest>(EMPTY_FORM);
   const [formError, setFormError] = useState<string | null>(null);
@@ -48,10 +50,10 @@ export function SettingsPage() {
       });
       setView({ status: "loaded" });
     } catch (error) {
-      const message = error instanceof ApiError ? error.message : "Unable to reach the API.";
+      const message = error instanceof ApiError ? error.message : t("settings.errorReachApi");
       setView({ status: "error", message });
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     loadSettings();
@@ -61,11 +63,11 @@ export function SettingsPage() {
     event.preventDefault();
 
     if (!form.clinicName.trim() || !form.defaultCurrency.trim()) {
-      setFormError("Clinic name and currency are required.");
+      setFormError(t("settings.errorRequired"));
       return;
     }
     if (form.email && !/^\S+@\S+\.\S+$/.test(form.email.trim())) {
-      setFormError("Enter a valid email address.");
+      setFormError(t("settings.errorInvalidEmail"));
       return;
     }
 
@@ -81,9 +83,9 @@ export function SettingsPage() {
         openingTime: form.openingTime || undefined,
         closingTime: form.closingTime || undefined,
       });
-      setSuccessMessage("Clinic settings saved.");
+      setSuccessMessage(t("settings.saveSuccess"));
     } catch (error) {
-      setFormError(error instanceof ApiError ? error.message : "Unable to save clinic settings.");
+      setFormError(error instanceof ApiError ? error.message : t("settings.errorUnableToSave"));
     } finally {
       setIsSaving(false);
     }
@@ -92,64 +94,64 @@ export function SettingsPage() {
   const workingHours =
     form.openingTime && form.closingTime
       ? `${form.openingTime} – ${form.closingTime}`
-      : form.openingTime || form.closingTime || "Not set";
+      : form.openingTime || form.closingTime || t("settings.notSet");
 
   return (
     <>
-      <PageHeader title="Settings" subtitle="Manage your clinic profile and billing preferences." />
+      <PageHeader title={t("settings.title")} subtitle={t("settings.subtitle")} />
 
       {view.status === "loading" && (
-        <Card title="Clinic Profile">
-          <LoadingState label="Loading settings..." />
+        <Card title={t("settings.clinicProfile")}>
+          <LoadingState label={t("settings.loading")} />
         </Card>
       )}
 
       {view.status === "error" && (
-        <Card title="Clinic Profile">
-          <EmptyState title="Unable to load settings" description={view.message} />
+        <Card title={t("settings.clinicProfile")}>
+          <EmptyState title={t("settings.unableToLoad")} description={view.message} />
         </Card>
       )}
 
       {view.status === "loaded" && (
         <div className="settings-layout">
           <form className="settings-form" onSubmit={handleSubmit}>
-            <Card title="Clinic Information">
+            <Card title={t("settings.clinicInformation")}>
               <div className="settings-fields">
                 <Input
-                  label="Clinic name"
+                  label={t("settings.clinicName")}
                   required
                   value={form.clinicName}
                   onChange={(e) => setForm({ ...form, clinicName: e.target.value })}
                 />
                 <Input
-                  label="Phone number"
+                  label={t("settings.phoneNumber")}
                   value={form.phoneNumber}
                   onChange={(e) => setForm({ ...form, phoneNumber: e.target.value })}
                 />
                 <Input
-                  label="Email"
+                  label={t("settings.email")}
                   type="email"
                   value={form.email}
                   onChange={(e) => setForm({ ...form, email: e.target.value })}
                 />
                 <Input
-                  label="Address"
+                  label={t("settings.address")}
                   value={form.address}
                   onChange={(e) => setForm({ ...form, address: e.target.value })}
                 />
               </div>
             </Card>
 
-            <Card title="Working Hours">
+            <Card title={t("settings.workingHours")}>
               <div className="settings-form-row">
                 <Input
-                  label="Opening time"
+                  label={t("settings.openingTime")}
                   type="time"
                   value={form.openingTime}
                   onChange={(e) => setForm({ ...form, openingTime: e.target.value })}
                 />
                 <Input
-                  label="Closing time"
+                  label={t("settings.closingTime")}
                   type="time"
                   value={form.closingTime}
                   onChange={(e) => setForm({ ...form, closingTime: e.target.value })}
@@ -157,17 +159,15 @@ export function SettingsPage() {
               </div>
             </Card>
 
-            <Card title="Billing Settings">
+            <Card title={t("settings.billingSettings")}>
               <div className="settings-fields">
                 <Input
-                  label="Default currency"
+                  label={t("settings.defaultCurrency")}
                   required
                   value={form.defaultCurrency}
                   onChange={(e) => setForm({ ...form, defaultCurrency: e.target.value })}
                 />
-                <p className="settings-field-hint">
-                  Used for invoice totals and financial reports.
-                </p>
+                <p className="settings-field-hint">{t("settings.currencyHint")}</p>
               </div>
             </Card>
 
@@ -176,39 +176,39 @@ export function SettingsPage() {
 
             <div className="settings-form-actions">
               <Button type="submit" disabled={isSaving}>
-                {isSaving ? "Saving..." : "Save changes"}
+                {isSaving ? t("common.saving") : t("settings.saveChanges")}
               </Button>
             </div>
           </form>
 
           <aside className="settings-preview">
-            <Card title="Clinic Profile">
+            <Card title={t("settings.clinicProfile")}>
               <div className="settings-preview-body">
                 <div className="settings-preview-header">
                   <span className="settings-preview-name">
-                    {form.clinicName.trim() || "Clinic name"}
+                    {form.clinicName.trim() || t("settings.clinicName")}
                   </span>
-                  <span className="settings-preview-caption">Preview for invoices and reports</span>
+                  <span className="settings-preview-caption">{t("settings.previewCaption")}</span>
                 </div>
                 <dl className="settings-preview-list">
                   <div className="settings-preview-row">
-                    <dt>Phone</dt>
+                    <dt>{t("table.phone")}</dt>
                     <dd>{form.phoneNumber?.trim() || "—"}</dd>
                   </div>
                   <div className="settings-preview-row">
-                    <dt>Email</dt>
+                    <dt>{t("settings.email")}</dt>
                     <dd>{form.email?.trim() || "—"}</dd>
                   </div>
                   <div className="settings-preview-row">
-                    <dt>Address</dt>
+                    <dt>{t("settings.address")}</dt>
                     <dd>{form.address?.trim() || "—"}</dd>
                   </div>
                   <div className="settings-preview-row">
-                    <dt>Hours</dt>
+                    <dt>{t("settings.hours")}</dt>
                     <dd>{workingHours}</dd>
                   </div>
                   <div className="settings-preview-row">
-                    <dt>Currency</dt>
+                    <dt>{t("settings.currency")}</dt>
                     <dd>{form.defaultCurrency.trim() || "—"}</dd>
                   </div>
                 </dl>

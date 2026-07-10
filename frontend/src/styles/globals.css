@@ -83,7 +83,7 @@ textarea:focus-visible {
 .data-table thead th {
   position: sticky;
   top: 0;
-  text-align: left;
+  text-align: start;
   padding: var(--space-3) var(--space-4);
   font-size: 11px;
   font-weight: 700;
@@ -117,6 +117,6 @@ textarea:focus-visible {
 /* Right-aligned, tabular numeric columns (money, counts). */
 .data-table th.num,
 .data-table td.num {
-  text-align: right;
+  text-align: end;
   font-variant-numeric: tabular-nums;
 }

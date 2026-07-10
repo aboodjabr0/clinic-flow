@@ -11,6 +11,8 @@ import { Modal } from "../../components/common/Modal";
 import { usersApi } from "../../api/usersApi";
 import { doctorsApi } from "../../api/doctorsApi";
 import { ApiError } from "../../api/apiClient";
+import { useTranslation } from "../../i18n/useTranslation";
+import { getRoleLabelKey } from "../../utils/role";
 import type { UserRole } from "../../types/auth";
 import type { Doctor } from "../../types/doctor";
 import type { CreateUserRequest, User } from "../../types/user";
@@ -54,6 +56,7 @@ function formatDate(value: string | null): string {
 }
 
 export function UsersPage() {
+  const { t } = useTranslation();
   const [users, setUsers] = useState<User[]>([]);
   const [doctorProfiles, setDoctorProfiles] = useState<Doctor[]>([]);
   const [view, setView] = useState<ViewState>({ status: "loading" });
@@ -92,10 +95,10 @@ export function UsersPage() {
       setUsers(response.data);
       setView({ status: "loaded" });
     } catch (error) {
-      const message = error instanceof ApiError ? error.message : "Unable to reach the API.";
+      const message = error instanceof ApiError ? error.message : t("users.errorReachApi");
       setView({ status: "error", message });
     }
-  }, [search, roleFilter, statusFilter]);
+  }, [search, roleFilter, statusFilter, t]);
 
   const loadDoctorProfiles = useCallback(async () => {
     try {
@@ -144,19 +147,19 @@ export function UsersPage() {
     event.preventDefault();
 
     if (!form.fullName.trim()) {
-      setFormError("Full name is required.");
+      setFormError(t("users.errorNameRequired"));
       return;
     }
     if (!/^\S+@\S+\.\S+$/.test(form.email.trim())) {
-      setFormError("Enter a valid email address.");
+      setFormError(t("users.errorInvalidEmail"));
       return;
     }
     if (!form.role) {
-      setFormError("Role is required.");
+      setFormError(t("users.errorRoleRequired"));
       return;
     }
     if (!editingUser && form.password.trim().length < 8) {
-      setFormError("Password must be at least 8 characters.");
+      setFormError(t("users.errorPasswordMin"));
       return;
     }
 
@@ -186,7 +189,7 @@ export function UsersPage() {
       await loadUsers();
       await loadDoctorProfiles();
     } catch (error) {
-      setFormError(error instanceof ApiError ? error.message : "Unable to save user.");
+      setFormError(error instanceof ApiError ? error.message : t("users.errorUnableToSave"));
     } finally {
       setIsSaving(false);
     }
@@ -199,9 +202,7 @@ export function UsersPage() {
       await loadUsers();
     } catch (error) {
       setStatusActionError(
-        user.isActive
-          ? "Unable to deactivate this user. The clinic must always have at least one active admin."
-          : "Unable to activate this user.",
+        user.isActive ? t("users.errorDeactivateLastAdmin") : t("users.errorUnableToActivate"),
       );
     }
   }
@@ -222,7 +223,7 @@ export function UsersPage() {
     if (!resetPasswordUser) return;
 
     if (newPassword.length < 8) {
-      setResetError("Password must be at least 8 characters.");
+      setResetError(t("users.errorPasswordMin"));
       return;
     }
 
@@ -232,7 +233,7 @@ export function UsersPage() {
       await usersApi.resetPassword(resetPasswordUser.id, { newPassword });
       setResetPasswordUser(null);
     } catch (error) {
-      setResetError(error instanceof ApiError ? error.message : "Unable to reset password.");
+      setResetError(error instanceof ApiError ? error.message : t("users.errorUnableToResetPassword"));
     } finally {
       setIsResetting(false);
     }
@@ -245,46 +246,46 @@ export function UsersPage() {
   return (
     <>
       <PageHeader
-        title="User Management"
-        subtitle="Create and manage staff login accounts for the clinic."
-        actions={<Button onClick={openCreateModal}>Add User</Button>}
+        title={t("users.title")}
+        subtitle={t("users.subtitle")}
+        actions={<Button onClick={openCreateModal}>{t("users.addUser")}</Button>}
       />
 
       <Card>
         <div className="users-filters">
           <Input
-            placeholder="Search by name or email..."
+            placeholder={t("users.searchPlaceholder")}
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
           />
           <Select value={roleFilter} onChange={(e) => setRoleFilter(e.target.value as RoleFilter)}>
-            <option value="all">All roles</option>
-            <option value="Admin">Admin</option>
-            <option value="Doctor">Doctor</option>
-            <option value="Receptionist">Receptionist</option>
+            <option value="all">{t("users.allRoles")}</option>
+            <option value="Admin">{t("roles.admin")}</option>
+            <option value="Doctor">{t("roles.doctor")}</option>
+            <option value="Receptionist">{t("roles.receptionist")}</option>
           </Select>
           <Select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
           >
-            <option value="all">All statuses</option>
-            <option value="active">Active</option>
-            <option value="inactive">Inactive</option>
+            <option value="all">{t("users.allStatuses")}</option>
+            <option value="active">{t("common.active")}</option>
+            <option value="inactive">{t("common.inactive")}</option>
           </Select>
         </div>
 
         {statusActionError && <p className="users-form-error">{statusActionError}</p>}
 
-        {view.status === "loading" && <LoadingState label="Loading users..." />}
+        {view.status === "loading" && <LoadingState label={t("users.loading")} />}
 
         {view.status === "error" && (
-          <EmptyState title="Unable to load users" description={view.message} />
+          <EmptyState title={t("users.unableToLoad")} description={view.message} />
         )}
 
         {view.status === "loaded" && users.length === 0 && (
           <EmptyState
-            title="No users found"
-            description="Try adjusting your search or filters, or add a new staff account."
+            title={t("users.noneFoundTitle")}
+            description={t("users.noneFoundDescription")}
           />
         )}
 
@@ -293,13 +294,13 @@ export function UsersPage() {
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>Name</th>
-                  <th>Email</th>
-                  <th>Role</th>
-                  <th>Doctor profile</th>
-                  <th>Status</th>
-                  <th>Created</th>
-                  <th aria-label="Actions" />
+                  <th>{t("table.name")}</th>
+                  <th>{t("table.email")}</th>
+                  <th>{t("table.role")}</th>
+                  <th>{t("table.doctorProfile")}</th>
+                  <th>{t("table.status")}</th>
+                  <th>{t("table.created")}</th>
+                  <th aria-label={t("common.actions")} />
                 </tr>
               </thead>
               <tbody>
@@ -308,28 +309,28 @@ export function UsersPage() {
                     <td>{user.fullName}</td>
                     <td>{user.email}</td>
                     <td>
-                      <StatusBadge label={user.role} variant={ROLE_BADGE_VARIANT[user.role]} />
+                      <StatusBadge label={t(getRoleLabelKey(user.role))} variant={ROLE_BADGE_VARIANT[user.role]} />
                     </td>
                     <td>{user.doctorProfileName ?? "—"}</td>
                     <td>
                       <StatusBadge
-                        label={user.isActive ? "Active" : "Inactive"}
+                        label={user.isActive ? t("common.active") : t("common.inactive")}
                         variant={user.isActive ? "success" : "neutral"}
                       />
                     </td>
                     <td>{formatDate(user.createdAtUtc)}</td>
                     <td className="users-table-actions">
                       <Button variant="ghost" onClick={() => openEditModal(user)}>
-                        Edit
+                        {t("common.edit")}
                       </Button>
                       <Button variant="ghost" onClick={() => openResetPasswordModal(user)}>
-                        Reset Password
+                        {t("users.resetPassword")}
                       </Button>
                       <Button
                         variant={user.isActive ? "danger" : "secondary"}
                         onClick={() => handleToggleStatus(user)}
                       >
-                        {user.isActive ? "Deactivate" : "Activate"}
+                        {user.isActive ? t("users.deactivate") : t("users.activate")}
                       </Button>
                     </td>
                   </tr>
@@ -340,16 +341,16 @@ export function UsersPage() {
         )}
       </Card>
 
-      <Modal isOpen={isModalOpen} title={editingUser ? "Edit User" : "Add User"} onClose={closeModal}>
+      <Modal isOpen={isModalOpen} title={editingUser ? t("users.editUser") : t("users.addUserTitle")} onClose={closeModal}>
         <form className="modal-form" onSubmit={handleSubmit}>
           <Input
-            label="Full name"
+            label={t("users.fullName")}
             required
             value={form.fullName}
             onChange={(e) => setForm({ ...form, fullName: e.target.value })}
           />
           <Input
-            label="Email"
+            label={t("users.email")}
             type="email"
             required
             value={form.email}
@@ -357,7 +358,7 @@ export function UsersPage() {
           />
           {!editingUser && (
             <Input
-              label="Password"
+              label={t("users.password")}
               type="password"
               required
               value={form.password}
@@ -365,7 +366,7 @@ export function UsersPage() {
             />
           )}
           <Select
-            label="Role"
+            label={t("users.role")}
             required
             value={form.role}
             onChange={(e) =>
@@ -373,22 +374,22 @@ export function UsersPage() {
             }
           >
             <option value="" disabled>
-              Select role
+              {t("users.selectRole")}
             </option>
-            <option value="Admin">Admin</option>
-            <option value="Doctor">Doctor</option>
-            <option value="Receptionist">Receptionist</option>
+            <option value="Admin">{t("roles.admin")}</option>
+            <option value="Doctor">{t("roles.doctor")}</option>
+            <option value="Receptionist">{t("roles.receptionist")}</option>
           </Select>
           {form.role === "Doctor" && (
             <Select
-              label="Doctor profile (optional)"
+              label={t("users.doctorProfileOptional")}
               value={form.doctorProfileId}
               onChange={(e) => setForm({ ...form, doctorProfileId: e.target.value })}
             >
-              <option value="">No linked profile</option>
+              <option value="">{t("users.noLinkedProfile")}</option>
               {availableDoctorProfiles.map((profile) => (
                 <option key={profile.id} value={profile.id}>
-                  {profile.fullName} — {profile.specialty}
+                  {t("users.doctorProfileOption", { name: profile.fullName, specialty: profile.specialty })}
                 </option>
               ))}
             </Select>
@@ -400,7 +401,7 @@ export function UsersPage() {
                 checked={form.isActive}
                 onChange={(e) => setForm({ ...form, isActive: e.target.checked })}
               />
-              Active
+              {t("users.active")}
             </label>
           )}
 
@@ -408,10 +409,10 @@ export function UsersPage() {
 
           <div className="modal-actions">
             <Button type="button" variant="secondary" onClick={closeModal} disabled={isSaving}>
-              Cancel
+              {t("common.cancel")}
             </Button>
             <Button type="submit" disabled={isSaving}>
-              {isSaving ? "Saving..." : "Save"}
+              {isSaving ? t("common.saving") : t("common.save")}
             </Button>
           </div>
         </form>
@@ -419,12 +420,16 @@ export function UsersPage() {
 
       <Modal
         isOpen={resetPasswordUser !== null}
-        title={`Reset Password${resetPasswordUser ? ` — ${resetPasswordUser.fullName}` : ""}`}
+        title={
+          resetPasswordUser
+            ? t("users.resetPasswordTitleWithName", { name: resetPasswordUser.fullName })
+            : t("users.resetPasswordTitle")
+        }
         onClose={closeResetPasswordModal}
       >
         <form className="modal-form" onSubmit={handleResetPassword}>
           <Input
-            label="New password"
+            label={t("users.newPassword")}
             type="password"
             required
             value={newPassword}
@@ -435,10 +440,10 @@ export function UsersPage() {
 
           <div className="modal-actions">
             <Button type="button" variant="secondary" onClick={closeResetPasswordModal} disabled={isResetting}>
-              Cancel
+              {t("common.cancel")}
             </Button>
             <Button type="submit" disabled={isResetting}>
-              {isResetting ? "Resetting..." : "Reset Password"}
+              {isResetting ? t("users.resetting") : t("users.resetPassword")}
             </Button>
           </div>
         </form>

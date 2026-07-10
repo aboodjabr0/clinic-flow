@@ -13,10 +13,11 @@ import { AddPaymentModal } from "../../components/invoices/AddPaymentModal";
 import { invoicesApi } from "../../api/invoicesApi";
 import { ApiError } from "../../api/apiClient";
 import { useAuth } from "../../context/AuthContext";
+import { useTranslation } from "../../i18n/useTranslation";
 import { formatDate } from "../../utils/patient";
 import {
-  PAYMENT_METHOD_LABELS,
-  PAYMENT_STATUS_LABELS,
+  PAYMENT_METHOD_LABEL_KEYS,
+  PAYMENT_STATUS_LABEL_KEYS,
   PAYMENT_STATUS_VARIANTS,
   formatMoney,
 } from "../../utils/invoice";
@@ -32,6 +33,7 @@ export function InvoiceDetailsPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { hasAnyRole } = useAuth();
+  const { t } = useTranslation();
   const canManageInvoices = hasAnyRole(["Admin", "Receptionist"]);
 
   const [invoice, setInvoice] = useState<Invoice | null>(null);
@@ -53,10 +55,10 @@ export function InvoiceDetailsPage() {
       setInvoice(response.data);
       setView({ status: "loaded" });
     } catch (error) {
-      const message = error instanceof ApiError ? error.message : "Unable to reach the API.";
+      const message = error instanceof ApiError ? error.message : t("invoiceDetails.errorReachApi");
       setView({ status: "error", message });
     }
-  }, [id]);
+  }, [id, t]);
 
   useEffect(() => {
     loadInvoice();
@@ -82,7 +84,7 @@ export function InvoiceDetailsPage() {
 
     const discountValue = editDiscount.trim() === "" ? undefined : Number(editDiscount);
     if (discountValue !== undefined && (Number.isNaN(discountValue) || discountValue < 0)) {
-      setEditError("Discount cannot be negative.");
+      setEditError(t("invoiceDetails.errorDiscountNegative"));
       return;
     }
 
@@ -97,7 +99,7 @@ export function InvoiceDetailsPage() {
       setInvoice(response.data);
       setIsEditModalOpen(false);
     } catch (error) {
-      setEditError(error instanceof ApiError ? error.message : "Unable to update invoice.");
+      setEditError(error instanceof ApiError ? error.message : t("invoiceDetails.errorUnableToUpdate"));
     } finally {
       setIsSaving(false);
     }
@@ -108,24 +110,24 @@ export function InvoiceDetailsPage() {
   return (
     <>
       <PageHeader
-        title="Invoice Details"
-        subtitle="View invoice, payment history, and balance."
+        title={t("invoiceDetails.title")}
+        subtitle={t("invoiceDetails.subtitle")}
         actions={
           <Button variant="secondary" onClick={() => navigate("/invoices")}>
-            Back to Invoices
+            {t("invoiceDetails.backToInvoices")}
           </Button>
         }
       />
 
       {view.status === "loading" && (
         <Card>
-          <LoadingState label="Loading invoice..." />
+          <LoadingState label={t("invoiceDetails.loading")} />
         </Card>
       )}
 
       {view.status === "error" && (
         <Card>
-          <EmptyState title="Unable to load invoice" description={view.message} />
+          <EmptyState title={t("invoiceDetails.unableToLoad")} description={view.message} />
         </Card>
       )}
 
@@ -136,11 +138,11 @@ export function InvoiceDetailsPage() {
               canManageInvoices ? (
                 <div className="invoice-details-actions">
                   <Button variant="secondary" onClick={openEditModal}>
-                    Edit
+                    {t("common.edit")}
                   </Button>
                   {invoice.remainingAmount > 0 && (
                     <Button variant="primary" onClick={() => setIsPaymentModalOpen(true)}>
-                      Add Payment
+                      {t("invoiceDetails.addPayment")}
                     </Button>
                   )}
                 </div>
@@ -151,99 +153,99 @@ export function InvoiceDetailsPage() {
               <div>
                 <h2 className="invoice-details-title">{invoice.invoiceNumber}</h2>
                 <p className="invoice-details-subtitle">
-                  Issued {formatDate(invoice.issueDate)}
-                  {invoice.dueDate ? ` · Due ${formatDate(invoice.dueDate)}` : ""}
+                  {t("invoiceDetails.issued", { date: formatDate(invoice.issueDate) })}
+                  {invoice.dueDate ? ` · ${t("invoiceDetails.due", { date: formatDate(invoice.dueDate) })}` : ""}
                 </p>
               </div>
               <StatusBadge
-                label={PAYMENT_STATUS_LABELS[invoice.status]}
+                label={t(PAYMENT_STATUS_LABEL_KEYS[invoice.status])}
                 variant={PAYMENT_STATUS_VARIANTS[invoice.status]}
               />
             </div>
 
             <div className="invoice-details-grid">
               <div className="invoice-details-field">
-                <span className="invoice-details-label">Patient</span>
+                <span className="invoice-details-label">{t("invoiceDetails.patient")}</span>
                 <Link className="invoice-details-link" to={`/patients/${invoice.patientId}`}>
                   {invoice.patientFullName}
                 </Link>
               </div>
               <div className="invoice-details-field">
-                <span className="invoice-details-label">Patient phone</span>
+                <span className="invoice-details-label">{t("invoiceDetails.patientPhone")}</span>
                 <span className="invoice-details-value">{invoice.patientPhoneNumber}</span>
               </div>
               <div className="invoice-details-field">
-                <span className="invoice-details-label">Service</span>
+                <span className="invoice-details-label">{t("invoiceDetails.service")}</span>
                 <span className="invoice-details-value">{invoice.serviceName ?? "—"}</span>
               </div>
               <div className="invoice-details-field">
-                <span className="invoice-details-label">Appointment</span>
+                <span className="invoice-details-label">{t("invoiceDetails.appointment")}</span>
                 {invoice.appointmentId ? (
                   <Link className="invoice-details-link" to={`/appointments/${invoice.appointmentId}`}>
-                    View appointment
+                    {t("invoiceDetails.viewAppointment")}
                   </Link>
                 ) : (
                   <span className="invoice-details-value">—</span>
                 )}
               </div>
               <div className="invoice-details-field">
-                <span className="invoice-details-label">Visit</span>
+                <span className="invoice-details-label">{t("invoiceDetails.visit")}</span>
                 {invoice.visitId ? (
                   <Link className="invoice-details-link" to={`/visits/${invoice.visitId}`}>
-                    View visit
+                    {t("invoiceDetails.viewVisit")}
                   </Link>
                 ) : (
                   <span className="invoice-details-value">—</span>
                 )}
               </div>
               <div className="invoice-details-field">
-                <span className="invoice-details-label">Created</span>
+                <span className="invoice-details-label">{t("invoiceDetails.created")}</span>
                 <span className="invoice-details-value">{formatDate(invoice.createdAtUtc)}</span>
               </div>
               <div className="invoice-details-field">
-                <span className="invoice-details-label">Last updated</span>
+                <span className="invoice-details-label">{t("invoiceDetails.lastUpdated")}</span>
                 <span className="invoice-details-value">{formatDate(invoice.updatedAtUtc)}</span>
               </div>
             </div>
           </Card>
 
-          <Card title="Amounts">
+          <Card title={t("invoiceDetails.amounts")}>
             <div className="invoice-details-amounts">
               <div className="invoice-details-amount-row">
-                <span>Subtotal</span>
+                <span>{t("invoiceDetails.subtotal")}</span>
                 <span>{formatMoney(invoice.subtotalAmount)}</span>
               </div>
               <div className="invoice-details-amount-row">
-                <span>Discount</span>
+                <span>{t("invoiceDetails.discount")}</span>
                 <span>-{formatMoney(invoice.discountAmount)}</span>
               </div>
               <div className="invoice-details-amount-row invoice-details-amount-total">
-                <span>Total</span>
+                <span>{t("invoiceDetails.total")}</span>
                 <span>{formatMoney(invoice.totalAmount)}</span>
               </div>
               <div className="invoice-details-amount-row">
-                <span>Paid</span>
+                <span>{t("invoiceDetails.paid")}</span>
                 <span>{formatMoney(invoice.paidAmount)}</span>
               </div>
               <div className="invoice-details-amount-row invoice-details-amount-total">
-                <span>Remaining</span>
+                <span>{t("invoiceDetails.remaining")}</span>
                 <span>{formatMoney(invoice.remainingAmount)}</span>
               </div>
             </div>
           </Card>
 
-          <Card title="Notes">
-            <p className="invoice-details-notes">{invoice.notes ?? "No notes recorded."}</p>
+          <Card title={t("invoiceDetails.notes")}>
+            <p className="invoice-details-notes">{invoice.notes ?? t("invoiceDetails.noNotes")}</p>
           </Card>
 
-          <Card title="Payments">
+          <Card title={t("invoiceDetails.payments")}>
             {!hasPayments && (
               <EmptyState
-                title="No payments recorded"
+                title={t("invoiceDetails.noPaymentsTitle")}
                 description={
                   canManageInvoices
-                    ? "Record the first payment with the Add Payment button."
-                    : "No payments have been recorded for this invoice."
+                    ? t("invoiceDetails.noPaymentsDescriptionAdd")
+                    : t("invoiceDetails.noPaymentsFallback")
                 }
               />
             )}
@@ -253,12 +255,12 @@ export function InvoiceDetailsPage() {
                 <table className="data-table invoice-details-payments-table">
                   <thead>
                     <tr>
-                      <th>Date</th>
-                      <th>Amount</th>
-                      <th>Method</th>
-                      <th>Reference</th>
-                      <th>Recorded by</th>
-                      <th>Notes</th>
+                      <th>{t("table.date")}</th>
+                      <th>{t("table.total")}</th>
+                      <th>{t("table.method")}</th>
+                      <th>{t("table.reference")}</th>
+                      <th>{t("table.recordedBy")}</th>
+                      <th>{t("table.notes")}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -266,7 +268,7 @@ export function InvoiceDetailsPage() {
                       <tr key={payment.id}>
                         <td>{formatDate(payment.paymentDate)}</td>
                         <td>{formatMoney(payment.amount)}</td>
-                        <td>{PAYMENT_METHOD_LABELS[payment.method]}</td>
+                        <td>{t(PAYMENT_METHOD_LABEL_KEYS[payment.method])}</td>
                         <td>{payment.referenceNumber ?? "—"}</td>
                         <td>{payment.createdByUserName ?? "—"}</td>
                         <td>{payment.notes ?? "—"}</td>
@@ -294,16 +296,11 @@ export function InvoiceDetailsPage() {
         />
       )}
 
-      <Modal isOpen={isEditModalOpen} title="Edit Invoice" onClose={closeEditModal}>
+      <Modal isOpen={isEditModalOpen} title={t("invoiceDetails.editTitle")} onClose={closeEditModal}>
         <form className="modal-form" onSubmit={handleEditSubmit}>
-          {hasPayments && (
-            <p className="invoice-details-form-note">
-              Payments have been recorded, so the discount can no longer be changed. Only notes and due date are
-              editable.
-            </p>
-          )}
+          {hasPayments && <p className="invoice-details-form-note">{t("invoiceDetails.editDisclaimer")}</p>}
           <Input
-            label="Discount amount"
+            label={t("invoiceDetails.discountAmount")}
             type="number"
             min="0"
             step="0.01"
@@ -312,21 +309,25 @@ export function InvoiceDetailsPage() {
             disabled={hasPayments}
           />
           <Input
-            label="Due date (optional)"
+            label={t("invoiceDetails.dueDateOptional")}
             type="date"
             value={editDueDate}
             onChange={(e) => setEditDueDate(e.target.value)}
           />
-          <Textarea label="Notes (optional)" value={editNotes} onChange={(e) => setEditNotes(e.target.value)} />
+          <Textarea
+            label={t("invoiceDetails.notesOptional")}
+            value={editNotes}
+            onChange={(e) => setEditNotes(e.target.value)}
+          />
 
           {editError && <p className="invoice-details-form-error">{editError}</p>}
 
           <div className="modal-actions">
             <Button type="button" variant="secondary" onClick={closeEditModal} disabled={isSaving}>
-              Cancel
+              {t("common.cancel")}
             </Button>
             <Button type="submit" disabled={isSaving}>
-              {isSaving ? "Saving..." : "Save"}
+              {isSaving ? t("common.saving") : t("common.save")}
             </Button>
           </div>
         </form>

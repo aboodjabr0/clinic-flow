@@ -1,38 +1,42 @@
-const ACTION_LABELS: Record<string, string> = {
-  Created: "Created",
-  Updated: "Updated",
-  Deleted: "Deleted",
-  Activated: "Activated",
-  Deactivated: "Deactivated",
-  StatusChanged: "Status Changed",
-  Cancelled: "Cancelled",
-  PaymentAdded: "Payment Added",
-  LoginSucceeded: "Login Succeeded",
-  LoginFailed: "Login Failed",
-  VisitStarted: "Visit Started",
-  VisitCompleted: "Visit Completed",
-  InvoiceCreated: "Invoice Created",
-  SettingsUpdated: "Settings Updated",
+import type { TranslationKey } from "../i18n/translations";
+
+const ACTION_LABEL_KEYS: Record<string, TranslationKey> = {
+  Created: "auditAction.created",
+  Updated: "auditAction.updated",
+  Deleted: "auditAction.deleted",
+  Activated: "auditAction.activated",
+  Deactivated: "auditAction.deactivated",
+  StatusChanged: "auditAction.statusChanged",
+  Cancelled: "auditAction.cancelled",
+  PaymentAdded: "auditAction.paymentAdded",
+  LoginSucceeded: "auditAction.loginSucceeded",
+  LoginFailed: "auditAction.loginFailed",
+  VisitStarted: "auditAction.visitStarted",
+  VisitCompleted: "auditAction.visitCompleted",
+  InvoiceCreated: "auditAction.invoiceCreated",
+  SettingsUpdated: "auditAction.settingsUpdated",
 };
 
-const ENTITY_TYPE_LABELS: Record<string, string> = {
-  Patient: "Patient",
-  DoctorProfile: "Doctor",
-  DentalService: "Dental Service",
-  ClinicSettings: "Clinic Settings",
-  Appointment: "Appointment",
-  Visit: "Visit",
-  Invoice: "Invoice",
-  Payment: "Payment",
-  Auth: "Auth",
+const ENTITY_TYPE_LABEL_KEYS: Record<string, TranslationKey> = {
+  Patient: "auditEntity.patient",
+  DoctorProfile: "auditEntity.doctorProfile",
+  DentalService: "auditEntity.dentalService",
+  ClinicSettings: "auditEntity.clinicSettings",
+  Appointment: "auditEntity.appointment",
+  Visit: "auditEntity.visit",
+  Invoice: "auditEntity.invoice",
+  Payment: "auditEntity.payment",
+  Auth: "auditEntity.auth",
 };
 
-export function formatAuditAction(action: string): string {
-  return ACTION_LABELS[action] ?? action;
+/** Returns a translation key when known, otherwise the raw value as a safe fallback for `t()`. */
+export function formatAuditAction(action: string): TranslationKey {
+  return ACTION_LABEL_KEYS[action] ?? (action as TranslationKey);
 }
 
-export function formatEntityType(entityType: string): string {
-  return ENTITY_TYPE_LABELS[entityType] ?? entityType;
+/** Returns a translation key when known, otherwise the raw value as a safe fallback for `t()`. */
+export function formatEntityType(entityType: string): TranslationKey {
+  return ENTITY_TYPE_LABEL_KEYS[entityType] ?? (entityType as TranslationKey);
 }
 
 const DANGER_ACTIONS = new Set(["Deleted", "Deactivated", "Cancelled", "LoginFailed"]);

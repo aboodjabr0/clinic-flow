@@ -11,10 +11,11 @@ import { appointmentsApi } from "../../api/appointmentsApi";
 import { visitsApi } from "../../api/visitsApi";
 import { invoicesApi } from "../../api/invoicesApi";
 import { ApiError } from "../../api/apiClient";
-import { calculateAge, formatDate, GENDER_LABELS } from "../../utils/patient";
-import { APPOINTMENT_STATUS_LABELS, APPOINTMENT_STATUS_VARIANTS } from "../../utils/appointment";
-import { VISIT_STATUS_LABELS, VISIT_STATUS_VARIANTS } from "../../utils/visit";
-import { PAYMENT_STATUS_LABELS, PAYMENT_STATUS_VARIANTS, formatMoney } from "../../utils/invoice";
+import { useTranslation } from "../../i18n/useTranslation";
+import { calculateAge, formatDate, GENDER_LABEL_KEYS } from "../../utils/patient";
+import { APPOINTMENT_STATUS_LABEL_KEYS, APPOINTMENT_STATUS_VARIANTS } from "../../utils/appointment";
+import { VISIT_STATUS_LABEL_KEYS, VISIT_STATUS_VARIANTS } from "../../utils/visit";
+import { PAYMENT_STATUS_LABEL_KEYS, PAYMENT_STATUS_VARIANTS, formatMoney } from "../../utils/invoice";
 import type { Patient } from "../../types/patient";
 import type { AppointmentListItem } from "../../types/appointment";
 import type { VisitListItem } from "../../types/visit";
@@ -29,6 +30,7 @@ type ViewState =
 export function PatientDetailsPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const [patient, setPatient] = useState<Patient | null>(null);
   const [view, setView] = useState<ViewState>({ status: "loading" });
@@ -47,10 +49,10 @@ export function PatientDetailsPage() {
       setPatient(response.data);
       setView({ status: "loaded" });
     } catch (error) {
-      const message = error instanceof ApiError ? error.message : "Unable to reach the API.";
+      const message = error instanceof ApiError ? error.message : t("patientDetails.errorReachApi");
       setView({ status: "error", message });
     }
-  }, [id]);
+  }, [id, t]);
 
   const loadAppointments = useCallback(async () => {
     if (!id) return;
@@ -59,9 +61,9 @@ export function PatientDetailsPage() {
       setAppointments(response.data);
       setAppointmentsError(null);
     } catch (error) {
-      setAppointmentsError(error instanceof ApiError ? error.message : "Unable to load appointments.");
+      setAppointmentsError(error instanceof ApiError ? error.message : t("patientDetails.errorLoadAppointments"));
     }
-  }, [id]);
+  }, [id, t]);
 
   useEffect(() => {
     loadPatient();
@@ -74,9 +76,9 @@ export function PatientDetailsPage() {
       setVisits(response.data);
       setVisitsError(null);
     } catch (error) {
-      setVisitsError(error instanceof ApiError ? error.message : "Unable to load visits.");
+      setVisitsError(error instanceof ApiError ? error.message : t("patientDetails.errorLoadVisits"));
     }
-  }, [id]);
+  }, [id, t]);
 
   useEffect(() => {
     loadAppointments();
@@ -93,9 +95,9 @@ export function PatientDetailsPage() {
       setInvoices(response.data);
       setInvoicesError(null);
     } catch (error) {
-      setInvoicesError(error instanceof ApiError ? error.message : "Unable to load invoices.");
+      setInvoicesError(error instanceof ApiError ? error.message : t("patientDetails.errorLoadInvoices"));
     }
-  }, [id]);
+  }, [id, t]);
 
   useEffect(() => {
     loadInvoices();
@@ -104,24 +106,24 @@ export function PatientDetailsPage() {
   return (
     <>
       <PageHeader
-        title="Patient Details"
-        subtitle="View patient information and history."
+        title={t("patientDetails.title")}
+        subtitle={t("patientDetails.subtitle")}
         actions={
           <Button variant="secondary" onClick={() => navigate("/patients")}>
-            Back to Patients
+            {t("patientDetails.backToPatients")}
           </Button>
         }
       />
 
       {view.status === "loading" && (
         <Card>
-          <LoadingState label="Loading patient..." />
+          <LoadingState label={t("patientDetails.loading")} />
         </Card>
       )}
 
       {view.status === "error" && (
         <Card>
-          <EmptyState title="Unable to load patient" description={view.message} />
+          <EmptyState title={t("patientDetails.unableToLoad")} description={view.message} />
         </Card>
       )}
 
@@ -132,71 +134,77 @@ export function PatientDetailsPage() {
               <div>
                 <h2 className="patient-details-name">{patient.fullName}</h2>
                 <p className="patient-details-subtitle">
-                  {GENDER_LABELS[patient.gender]}
-                  {calculateAge(patient.dateOfBirth) !== null && ` · ${calculateAge(patient.dateOfBirth)} years old`}
+                  {t(GENDER_LABEL_KEYS[patient.gender])}
+                  {calculateAge(patient.dateOfBirth) !== null &&
+                    ` · ${calculateAge(patient.dateOfBirth)} ${t("patientDetails.yearsOld")}`}
                 </p>
               </div>
               <StatusBadge
-                label={patient.isActive ? "Active" : "Inactive"}
+                label={patient.isActive ? t("common.active") : t("common.inactive")}
                 variant={patient.isActive ? "success" : "neutral"}
               />
             </div>
 
             <div className="patient-details-grid">
               <div className="patient-details-field">
-                <span className="patient-details-label">Phone number</span>
+                <span className="patient-details-label">{t("patients.phoneNumber")}</span>
                 <span className="patient-details-value">{patient.phoneNumber}</span>
               </div>
               <div className="patient-details-field">
-                <span className="patient-details-label">Email</span>
+                <span className="patient-details-label">{t("patients.email")}</span>
                 <span className="patient-details-value">{patient.email ?? "—"}</span>
               </div>
               <div className="patient-details-field">
-                <span className="patient-details-label">Date of birth</span>
+                <span className="patient-details-label">{t("patients.dateOfBirth")}</span>
                 <span className="patient-details-value">{formatDate(patient.dateOfBirth)}</span>
               </div>
               <div className="patient-details-field">
-                <span className="patient-details-label">Address</span>
+                <span className="patient-details-label">{t("patients.address")}</span>
                 <span className="patient-details-value">{patient.address ?? "—"}</span>
               </div>
               <div className="patient-details-field">
-                <span className="patient-details-label">Emergency contact</span>
+                <span className="patient-details-label">{t("patientDetails.emergencyContact")}</span>
                 <span className="patient-details-value">
                   {patient.emergencyContactName ?? "—"}
                   {patient.emergencyContactPhone ? ` (${patient.emergencyContactPhone})` : ""}
                 </span>
               </div>
               <div className="patient-details-field">
-                <span className="patient-details-label">Created</span>
+                <span className="patient-details-label">{t("table.created")}</span>
                 <span className="patient-details-value">{formatDate(patient.createdAtUtc)}</span>
               </div>
               <div className="patient-details-field">
-                <span className="patient-details-label">Last updated</span>
+                <span className="patient-details-label">{t("patientDetails.lastUpdated")}</span>
                 <span className="patient-details-value">{formatDate(patient.updatedAtUtc)}</span>
               </div>
             </div>
           </Card>
 
-          <Card title="Allergies">
-            <p className="patient-details-notes">{patient.allergies ?? "No known allergies recorded."}</p>
+          <Card title={t("patientDetails.allergies")}>
+            <p className="patient-details-notes">{patient.allergies ?? t("patientDetails.noAllergies")}</p>
           </Card>
 
-          <Card title="Medical Notes">
-            <p className="patient-details-notes">{patient.medicalNotes ?? "No medical notes recorded."}</p>
+          <Card title={t("patientDetails.medicalNotes")}>
+            <p className="patient-details-notes">{patient.medicalNotes ?? t("patientDetails.noMedicalNotes")}</p>
           </Card>
 
           <Card
-            title="Appointments"
+            title={t("patientDetails.appointments")}
             actions={
               <Button variant="ghost" onClick={() => navigate(`/appointments?patientId=${id}`)}>
-                View all
+                {t("patientDetails.viewAll")}
               </Button>
             }
           >
-            {appointmentsError && <EmptyState title="Unable to load appointments" description={appointmentsError} />}
+            {appointmentsError && (
+              <EmptyState title={t("patientDetails.unableToLoadAppointments")} description={appointmentsError} />
+            )}
 
             {!appointmentsError && appointments.length === 0 && (
-              <EmptyState title="No appointments yet" description="This patient has no scheduled or past appointments." />
+              <EmptyState
+                title={t("patientDetails.noAppointmentsTitle")}
+                description={t("patientDetails.noAppointmentsDescription")}
+              />
             )}
 
             {!appointmentsError && appointments.length > 0 && (
@@ -208,11 +216,14 @@ export function PatientDetailsPage() {
                         {formatDate(appointment.appointmentDate)} · {appointment.startTime} - {appointment.endTime}
                       </span>
                       <span className="patient-details-appointment-meta">
-                        {appointment.serviceName} with {appointment.doctorFullName}
+                        {t("patientDetails.serviceWithDoctor", {
+                          service: appointment.serviceName,
+                          doctor: appointment.doctorFullName,
+                        })}
                       </span>
                     </div>
                     <StatusBadge
-                      label={APPOINTMENT_STATUS_LABELS[appointment.status]}
+                      label={t(APPOINTMENT_STATUS_LABEL_KEYS[appointment.status])}
                       variant={APPOINTMENT_STATUS_VARIANTS[appointment.status]}
                     />
                   </div>
@@ -222,17 +233,20 @@ export function PatientDetailsPage() {
           </Card>
 
           <Card
-            title="Visit History"
+            title={t("patientDetails.visitHistory")}
             actions={
               <Button variant="ghost" onClick={() => navigate(`/visits?patientId=${id}`)}>
-                View all
+                {t("patientDetails.viewAll")}
               </Button>
             }
           >
-            {visitsError && <EmptyState title="Unable to load visits" description={visitsError} />}
+            {visitsError && <EmptyState title={t("patientDetails.unableToLoadVisits")} description={visitsError} />}
 
             {!visitsError && visits.length === 0 && (
-              <EmptyState title="No visits yet" description="This patient has no recorded visits." />
+              <EmptyState
+                title={t("patientDetails.noVisitsTitle")}
+                description={t("patientDetails.noVisitsDescription")}
+              />
             )}
 
             {!visitsError && visits.length > 0 && (
@@ -246,12 +260,17 @@ export function PatientDetailsPage() {
                     <div>
                       <span className="patient-details-appointment-date">{formatDate(visit.visitDate)}</span>
                       <span className="patient-details-appointment-meta">
-                        {visit.serviceName} with {visit.doctorFullName}
-                        {visit.followUpDate ? ` · Follow-up: ${formatDate(visit.followUpDate)}` : ""}
+                        {t("patientDetails.serviceWithDoctor", {
+                          service: visit.serviceName,
+                          doctor: visit.doctorFullName,
+                        })}
+                        {visit.followUpDate
+                          ? ` · ${t("patientDetails.followUpDate", { date: formatDate(visit.followUpDate) })}`
+                          : ""}
                       </span>
                     </div>
                     <StatusBadge
-                      label={VISIT_STATUS_LABELS[visit.status]}
+                      label={t(VISIT_STATUS_LABEL_KEYS[visit.status])}
                       variant={VISIT_STATUS_VARIANTS[visit.status]}
                     />
                   </div>
@@ -261,17 +280,20 @@ export function PatientDetailsPage() {
           </Card>
 
           <Card
-            title="Invoices"
+            title={t("patientDetails.invoices")}
             actions={
               <Button variant="ghost" onClick={() => navigate(`/invoices?patientId=${id}`)}>
-                View all
+                {t("patientDetails.viewAll")}
               </Button>
             }
           >
-            {invoicesError && <EmptyState title="Unable to load invoices" description={invoicesError} />}
+            {invoicesError && <EmptyState title={t("patientDetails.unableToLoadInvoices")} description={invoicesError} />}
 
             {!invoicesError && invoices.length === 0 && (
-              <EmptyState title="No invoices yet" description="This patient has no invoices." />
+              <EmptyState
+                title={t("patientDetails.noInvoicesTitle")}
+                description={t("patientDetails.noInvoicesDescription")}
+              />
             )}
 
             {!invoicesError && invoices.length > 0 && (
@@ -287,12 +309,15 @@ export function PatientDetailsPage() {
                         {invoice.invoiceNumber} · {formatDate(invoice.issueDate)}
                       </span>
                       <span className="patient-details-appointment-meta">
-                        Total {formatMoney(invoice.totalAmount)} · Remaining {formatMoney(invoice.remainingAmount)}
+                        {t("patientDetails.totalRemaining", {
+                          total: formatMoney(invoice.totalAmount),
+                          remaining: formatMoney(invoice.remainingAmount),
+                        })}
                         {invoice.serviceName ? ` · ${invoice.serviceName}` : ""}
                       </span>
                     </div>
                     <StatusBadge
-                      label={PAYMENT_STATUS_LABELS[invoice.status]}
+                      label={t(PAYMENT_STATUS_LABEL_KEYS[invoice.status])}
                       variant={PAYMENT_STATUS_VARIANTS[invoice.status]}
                     />
                   </div>

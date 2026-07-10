@@ -1,4 +1,5 @@
 import { Button } from "./Button";
+import { useTranslation } from "../../i18n/useTranslation";
 import "./Pagination.css";
 
 interface PaginationProps {
@@ -8,6 +9,8 @@ interface PaginationProps {
 }
 
 export function Pagination({ pageNumber, totalPages, onPageChange }: PaginationProps) {
+  const { t } = useTranslation();
+
   if (totalPages <= 1) {
     return null;
   }
@@ -20,10 +23,10 @@ export function Pagination({ pageNumber, totalPages, onPageChange }: PaginationP
         disabled={pageNumber <= 1}
         onClick={() => onPageChange(pageNumber - 1)}
       >
-        Previous
+        {t("pagination.previous")}
       </Button>
       <span className="pagination-label">
-        Page {pageNumber} of {totalPages}
+        {t("pagination.pageOf", { page: pageNumber, total: totalPages })}
       </span>
       <Button
         type="button"
@@ -31,7 +34,7 @@ export function Pagination({ pageNumber, totalPages, onPageChange }: PaginationP
         disabled={pageNumber >= totalPages}
         onClick={() => onPageChange(pageNumber + 1)}
       >
-        Next
+        {t("pagination.next")}
       </Button>
     </div>
   );

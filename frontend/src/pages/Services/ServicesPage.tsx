@@ -10,6 +10,7 @@ import { Modal } from "../../components/common/Modal";
 import { dentalServicesApi } from "../../api/dentalServicesApi";
 import { ApiError } from "../../api/apiClient";
 import { useAuth } from "../../context/AuthContext";
+import { useTranslation } from "../../i18n/useTranslation";
 import type { CreateDentalServiceRequest, DentalService } from "../../types/dentalService";
 import "./ServicesPage.css";
 
@@ -29,6 +30,7 @@ type FormState = typeof EMPTY_FORM;
 
 export function ServicesPage() {
   const { hasRole } = useAuth();
+  const { t } = useTranslation();
   const isAdmin = hasRole("Admin");
 
   const [services, setServices] = useState<DentalService[]>([]);
@@ -47,10 +49,10 @@ export function ServicesPage() {
       setServices(response.data);
       setView({ status: "loaded" });
     } catch (error) {
-      const message = error instanceof ApiError ? error.message : "Unable to reach the API.";
+      const message = error instanceof ApiError ? error.message : t("services.errorReachApi");
       setView({ status: "error", message });
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     loadServices();
@@ -87,15 +89,15 @@ export function ServicesPage() {
     const duration = Number(form.durationMinutes);
 
     if (!form.name.trim()) {
-      setFormError("Name is required.");
+      setFormError(t("services.errorNameRequired"));
       return;
     }
     if (Number.isNaN(price) || price < 0) {
-      setFormError("Price must be zero or greater.");
+      setFormError(t("services.errorPriceMin"));
       return;
     }
     if (Number.isNaN(duration) || duration <= 0) {
-      setFormError("Duration must be greater than zero.");
+      setFormError(t("services.errorDurationMin"));
       return;
     }
 
@@ -117,7 +119,7 @@ export function ServicesPage() {
       setIsModalOpen(false);
       await loadServices();
     } catch (error) {
-      setFormError(error instanceof ApiError ? error.message : "Unable to save dental service.");
+      setFormError(error instanceof ApiError ? error.message : t("services.errorUnableToSave"));
     } finally {
       setIsSaving(false);
     }
@@ -135,22 +137,22 @@ export function ServicesPage() {
   return (
     <>
       <PageHeader
-        title="Services"
-        subtitle="Manage the clinic's dental service catalog and pricing."
-        actions={isAdmin ? <Button onClick={openCreateModal}>Add Service</Button> : undefined}
+        title={t("services.title")}
+        subtitle={t("services.subtitle")}
+        actions={isAdmin ? <Button onClick={openCreateModal}>{t("services.addService")}</Button> : undefined}
       />
 
       <Card>
-        {view.status === "loading" && <LoadingState label="Loading services..." />}
+        {view.status === "loading" && <LoadingState label={t("services.loading")} />}
 
         {view.status === "error" && (
-          <EmptyState title="Unable to load services" description={view.message} />
+          <EmptyState title={t("services.unableToLoad")} description={view.message} />
         )}
 
         {view.status === "loaded" && services.length === 0 && (
           <EmptyState
-            title="No dental services yet"
-            description="Add the clinic's dental services to get started."
+            title={t("services.noneTitle")}
+            description={t("services.noneDescription")}
           />
         )}
 
@@ -159,12 +161,12 @@ export function ServicesPage() {
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>Name</th>
-                  <th>Description</th>
-                  <th>Price</th>
-                  <th>Duration</th>
-                  <th>Status</th>
-                  {isAdmin && <th aria-label="Actions" />}
+                  <th>{t("table.name")}</th>
+                  <th>{t("table.description")}</th>
+                  <th>{t("table.price")}</th>
+                  <th>{t("table.duration")}</th>
+                  <th>{t("table.status")}</th>
+                  {isAdmin && <th aria-label={t("common.actions")} />}
                 </tr>
               </thead>
               <tbody>
@@ -172,24 +174,24 @@ export function ServicesPage() {
                   <tr key={service.id}>
                     <td>{service.name}</td>
                     <td>{service.description ?? "—"}</td>
-                    <td>{service.defaultPrice.toFixed(2)} JOD</td>
-                    <td>{service.durationMinutes} min</td>
+                    <td>{t("services.priceCurrency", { price: service.defaultPrice.toFixed(2) })}</td>
+                    <td>{t("services.durationMinutes", { count: service.durationMinutes })}</td>
                     <td>
                       <StatusBadge
-                        label={service.isActive ? "Active" : "Inactive"}
+                        label={service.isActive ? t("common.active") : t("common.inactive")}
                         variant={service.isActive ? "success" : "neutral"}
                       />
                     </td>
                     {isAdmin && (
                       <td className="services-table-actions">
                         <Button variant="ghost" onClick={() => openEditModal(service)}>
-                          Edit
+                          {t("common.edit")}
                         </Button>
                         <Button
                           variant={service.isActive ? "danger" : "secondary"}
                           onClick={() => handleToggleStatus(service)}
                         >
-                          {service.isActive ? "Deactivate" : "Activate"}
+                          {service.isActive ? t("users.deactivate") : t("users.activate")}
                         </Button>
                       </td>
                     )}
@@ -203,23 +205,23 @@ export function ServicesPage() {
 
       <Modal
         isOpen={isModalOpen}
-        title={editingService ? "Edit Service" : "Add Service"}
+        title={editingService ? t("services.editTitle") : t("services.addTitle")}
         onClose={closeModal}
       >
         <form className="modal-form" onSubmit={handleSubmit}>
           <Input
-            label="Name"
+            label={t("services.name")}
             required
             value={form.name}
             onChange={(e) => setForm({ ...form, name: e.target.value })}
           />
           <Input
-            label="Description"
+            label={t("services.description")}
             value={form.description}
             onChange={(e) => setForm({ ...form, description: e.target.value })}
           />
           <Input
-            label="Default price (JOD)"
+            label={t("services.defaultPrice")}
             type="number"
             min="0"
             step="0.01"
@@ -228,7 +230,7 @@ export function ServicesPage() {
             onChange={(e) => setForm({ ...form, defaultPrice: e.target.value })}
           />
           <Input
-            label="Duration (minutes)"
+            label={t("services.durationLabel")}
             type="number"
             min="1"
             required
@@ -240,10 +242,10 @@ export function ServicesPage() {
 
           <div className="modal-actions">
             <Button type="button" variant="secondary" onClick={closeModal} disabled={isSaving}>
-              Cancel
+              {t("common.cancel")}
             </Button>
             <Button type="submit" disabled={isSaving}>
-              {isSaving ? "Saving..." : "Save"}
+              {isSaving ? t("common.saving") : t("common.save")}
             </Button>
           </div>
         </form>

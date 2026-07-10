@@ -15,8 +15,9 @@ import { visitsApi } from "../../api/visitsApi";
 import { invoicesApi } from "../../api/invoicesApi";
 import { ApiError } from "../../api/apiClient";
 import { useAuth } from "../../context/AuthContext";
+import { useTranslation } from "../../i18n/useTranslation";
 import { formatDate } from "../../utils/patient";
-import { VISIT_STATUS_LABELS, VISIT_STATUS_VARIANTS } from "../../utils/visit";
+import { VISIT_STATUS_LABEL_KEYS, VISIT_STATUS_VARIANTS } from "../../utils/visit";
 import type { UpdateVisitRequest, Visit } from "../../types/visit";
 import type { Invoice } from "../../types/invoice";
 import "./VisitDetailsPage.css";
@@ -58,6 +59,7 @@ export function VisitDetailsPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { hasAnyRole } = useAuth();
+  const { t } = useTranslation();
   const canManageVisits = hasAnyRole(["Admin", "Doctor"]);
   const canManageInvoices = hasAnyRole(["Admin", "Receptionist"]);
 
@@ -80,10 +82,10 @@ export function VisitDetailsPage() {
       setVisit(response.data);
       setView({ status: "loaded" });
     } catch (error) {
-      const message = error instanceof ApiError ? error.message : "Unable to reach the API.";
+      const message = error instanceof ApiError ? error.message : t("visitDetails.errorReachApi");
       setView({ status: "error", message });
     }
-  }, [id]);
+  }, [id, t]);
 
   useEffect(() => {
     loadVisit();
@@ -102,10 +104,10 @@ export function VisitDetailsPage() {
       }
       setInvoiceView({
         status: "error",
-        message: error instanceof ApiError ? error.message : "Unable to load invoice.",
+        message: error instanceof ApiError ? error.message : t("visitDetails.errorLoadInvoice"),
       });
     }
-  }, [id]);
+  }, [id, t]);
 
   useEffect(() => {
     loadInvoice();
@@ -149,7 +151,7 @@ export function VisitDetailsPage() {
       setIsModalOpen(false);
       await loadVisit();
     } catch (error) {
-      setFormError(error instanceof ApiError ? error.message : "Unable to save visit.");
+      setFormError(error instanceof ApiError ? error.message : t("visitDetails.errorUnableToSave"));
     } finally {
       setIsSaving(false);
     }
@@ -158,24 +160,24 @@ export function VisitDetailsPage() {
   return (
     <>
       <PageHeader
-        title="Visit Details"
-        subtitle="View visit notes and prescription."
+        title={t("visitDetails.title")}
+        subtitle={t("visitDetails.subtitle")}
         actions={
           <Button variant="secondary" onClick={() => navigate("/visits")}>
-            Back to Visits
+            {t("visitDetails.backToVisits")}
           </Button>
         }
       />
 
       {view.status === "loading" && (
         <Card>
-          <LoadingState label="Loading visit..." />
+          <LoadingState label={t("visitDetails.loading")} />
         </Card>
       )}
 
       {view.status === "error" && (
         <Card>
-          <EmptyState title="Unable to load visit" description={view.message} />
+          <EmptyState title={t("visitDetails.unableToLoad")} description={view.message} />
         </Card>
       )}
 
@@ -186,11 +188,11 @@ export function VisitDetailsPage() {
               canManageVisits ? (
                 <div className="visit-details-actions">
                   <Button variant="secondary" onClick={() => openModal("edit")}>
-                    Edit
+                    {t("common.edit")}
                   </Button>
                   {visit.status === "InProgress" && (
                     <Button variant="primary" onClick={() => openModal("complete")}>
-                      Complete Visit
+                      {t("visitDetails.completeVisit")}
                     </Button>
                   )}
                 </div>
@@ -200,120 +202,124 @@ export function VisitDetailsPage() {
             <div className="visit-details-header">
               <div>
                 <h2 className="visit-details-title">
-                  {visit.serviceName} with {visit.doctorFullName}
+                  {t("visitDetails.serviceWithDoctor", { service: visit.serviceName, doctor: visit.doctorFullName })}
                 </h2>
                 <p className="visit-details-subtitle">
-                  Visit date: {formatDate(visit.visitDate)} · Appointment: {formatDate(visit.appointmentDate)}{" "}
-                  {visit.appointmentStartTime} - {visit.appointmentEndTime}
+                  {t("visitDetails.visitDateAppointment", {
+                    date: formatDate(visit.visitDate),
+                    apptDate: formatDate(visit.appointmentDate),
+                    startTime: visit.appointmentStartTime,
+                    endTime: visit.appointmentEndTime,
+                  })}
                 </p>
               </div>
-              <StatusBadge label={VISIT_STATUS_LABELS[visit.status]} variant={VISIT_STATUS_VARIANTS[visit.status]} />
+              <StatusBadge label={t(VISIT_STATUS_LABEL_KEYS[visit.status])} variant={VISIT_STATUS_VARIANTS[visit.status]} />
             </div>
 
             <div className="visit-details-grid">
               <div className="visit-details-field">
-                <span className="visit-details-label">Patient</span>
+                <span className="visit-details-label">{t("visitDetails.patient")}</span>
                 <span className="visit-details-value">{visit.patientFullName}</span>
               </div>
               <div className="visit-details-field">
-                <span className="visit-details-label">Patient phone</span>
+                <span className="visit-details-label">{t("visitDetails.patientPhone")}</span>
                 <span className="visit-details-value">{visit.patientPhoneNumber}</span>
               </div>
               <div className="visit-details-field">
-                <span className="visit-details-label">Doctor</span>
+                <span className="visit-details-label">{t("visitDetails.doctor")}</span>
                 <span className="visit-details-value">{visit.doctorFullName}</span>
               </div>
               <div className="visit-details-field">
-                <span className="visit-details-label">Service</span>
+                <span className="visit-details-label">{t("visitDetails.service")}</span>
                 <span className="visit-details-value">{visit.serviceName}</span>
               </div>
               <div className="visit-details-field">
-                <span className="visit-details-label">Started</span>
+                <span className="visit-details-label">{t("visitDetails.started")}</span>
                 <span className="visit-details-value">
                   {visit.startedAtUtc ? formatDate(visit.startedAtUtc) : "—"}
                 </span>
               </div>
               <div className="visit-details-field">
-                <span className="visit-details-label">Completed</span>
+                <span className="visit-details-label">{t("visitDetails.completed")}</span>
                 <span className="visit-details-value">
                   {visit.completedAtUtc ? formatDate(visit.completedAtUtc) : "—"}
                 </span>
               </div>
               <div className="visit-details-field">
-                <span className="visit-details-label">Created</span>
+                <span className="visit-details-label">{t("visitDetails.created")}</span>
                 <span className="visit-details-value">{formatDate(visit.createdAtUtc)}</span>
               </div>
               <div className="visit-details-field">
-                <span className="visit-details-label">Last updated</span>
+                <span className="visit-details-label">{t("visitDetails.lastUpdated")}</span>
                 <span className="visit-details-value">{formatDate(visit.updatedAtUtc)}</span>
               </div>
             </div>
           </Card>
 
-          <Card title="Chief Complaint">
-            <p className="visit-details-note-caption">Doctor-entered notes.</p>
-            <p className="visit-details-notes">{visit.chiefComplaint ?? "No chief complaint recorded."}</p>
+          <Card title={t("visitDetails.chiefComplaintTitle")}>
+            <p className="visit-details-note-caption">{t("visitDetails.doctorEnteredNotes")}</p>
+            <p className="visit-details-notes">{visit.chiefComplaint ?? t("visitDetails.noChiefComplaint")}</p>
           </Card>
 
-          <Card title="Dental Treatment">
-            <p className="visit-details-note-caption">Doctor-entered notes.</p>
+          <Card title={t("visitDetails.dentalTreatment")}>
+            <p className="visit-details-note-caption">{t("visitDetails.doctorEnteredNotes")}</p>
             <div className="visit-details-field">
-              <span className="visit-details-label">Diagnosis note</span>
-              <p className="visit-details-notes">{visit.diagnosisNote ?? "No diagnosis note recorded."}</p>
+              <span className="visit-details-label">{t("visits.diagnosisNote")}</span>
+              <p className="visit-details-notes">{visit.diagnosisNote ?? t("visitDetails.noDiagnosisNote")}</p>
             </div>
             <div className="visit-details-field">
-              <span className="visit-details-label">Treatment note</span>
-              <p className="visit-details-notes">{visit.treatmentNote ?? "No treatment note recorded."}</p>
+              <span className="visit-details-label">{t("visits.treatmentNote")}</span>
+              <p className="visit-details-notes">{visit.treatmentNote ?? t("visitDetails.noTreatmentNote")}</p>
             </div>
             <div className="visit-details-field">
-              <span className="visit-details-label">Tooth numbers</span>
+              <span className="visit-details-label">{t("visits.toothNumbers")}</span>
               <p className="visit-details-notes">{visit.toothNumbers ?? "—"}</p>
             </div>
           </Card>
 
-          <Card title="Prescription">
-            <p className="visit-details-note-caption">Prescription text entered manually by doctor.</p>
-            <p className="visit-details-notes">{visit.prescriptionNote ?? "No prescription recorded."}</p>
+          <Card title={t("visitDetails.prescriptionTitle")}>
+            <p className="visit-details-note-caption">{t("visitDetails.prescriptionCaption")}</p>
+            <p className="visit-details-notes">{visit.prescriptionNote ?? t("visitDetails.noPrescription")}</p>
           </Card>
 
-          <Card title="Follow-up / Internal Notes">
+          <Card title={t("visitDetails.followUpInternalNotes")}>
             <div className="visit-details-field">
-              <span className="visit-details-label">Follow-up date</span>
+              <span className="visit-details-label">{t("visits.followUpDate")}</span>
               <span className="visit-details-value">
-                {visit.followUpDate ? formatDate(visit.followUpDate) : "No follow-up scheduled."}
+                {visit.followUpDate ? formatDate(visit.followUpDate) : t("visitDetails.noFollowUp")}
               </span>
             </div>
             <div className="visit-details-field">
-              <span className="visit-details-label">Internal notes</span>
-              <p className="visit-details-notes">{visit.internalNotes ?? "No internal notes recorded."}</p>
+              <span className="visit-details-label">{t("visits.internalNotes")}</span>
+              <p className="visit-details-notes">{visit.internalNotes ?? t("visitDetails.noInternalNotes")}</p>
             </div>
           </Card>
 
           <Card
-            title="Invoice"
+            title={t("visitDetails.invoice")}
             actions={
               invoiceView.status === "none" && canManageInvoices ? (
                 <Button variant="secondary" onClick={() => setIsCreateInvoiceModalOpen(true)}>
-                  Create Invoice
+                  {t("visitDetails.createInvoice")}
                 </Button>
               ) : undefined
             }
           >
-            {invoiceView.status === "loading" && <LoadingState label="Loading invoice..." />}
+            {invoiceView.status === "loading" && <LoadingState label={t("visitDetails.loadingInvoice")} />}
 
             {invoiceView.status === "error" && (
-              <EmptyState title="Unable to load invoice" description={invoiceView.message} />
+              <EmptyState title={t("visitDetails.unableToLoadInvoice")} description={invoiceView.message} />
             )}
 
             {invoiceView.status === "found" && <InvoiceSummaryCard invoice={invoiceView.invoice} />}
 
             {invoiceView.status === "none" && (
               <EmptyState
-                title="No invoice yet"
+                title={t("visitDetails.noInvoiceTitle")}
                 description={
                   canManageInvoices
-                    ? "Create an invoice for this visit."
-                    : "An invoice has not been created for this visit."
+                    ? t("visitDetails.noInvoiceDescription")
+                    : t("visitDetails.noInvoiceFallback")
                 }
               />
             )}
@@ -338,46 +344,48 @@ export function VisitDetailsPage() {
         />
       )}
 
-      <Modal isOpen={isModalOpen} title={modalMode === "complete" ? "Complete Visit" : "Edit Visit"} onClose={closeModal}>
+      <Modal
+        isOpen={isModalOpen}
+        title={modalMode === "complete" ? t("visits.completeTitle") : t("visits.editTitle")}
+        onClose={closeModal}
+      >
         {form && (
           <form className="modal-form" onSubmit={handleSubmit}>
-            <p className="visit-details-form-note">
-              Doctor-entered notes. The system does not generate diagnosis or treatment suggestions.
-            </p>
+            <p className="visit-details-form-note">{t("visits.doctorNoteDisclaimer")}</p>
 
             <Textarea
-              label="Chief complaint"
+              label={t("visits.chiefComplaint")}
               value={form.chiefComplaint}
               onChange={(e) => setForm({ ...form, chiefComplaint: e.target.value })}
             />
             <Textarea
-              label="Diagnosis note"
+              label={t("visits.diagnosisNote")}
               value={form.diagnosisNote}
               onChange={(e) => setForm({ ...form, diagnosisNote: e.target.value })}
             />
             <Textarea
-              label="Treatment note"
+              label={t("visits.treatmentNote")}
               value={form.treatmentNote}
               onChange={(e) => setForm({ ...form, treatmentNote: e.target.value })}
             />
             <Input
-              label="Tooth numbers"
+              label={t("visits.toothNumbers")}
               value={form.toothNumbers}
               onChange={(e) => setForm({ ...form, toothNumbers: e.target.value })}
             />
             <Textarea
-              label="Prescription (entered manually by doctor)"
+              label={t("visits.prescription")}
               value={form.prescriptionNote}
               onChange={(e) => setForm({ ...form, prescriptionNote: e.target.value })}
             />
             <Input
-              label="Follow-up date"
+              label={t("visits.followUpDate")}
               type="date"
               value={form.followUpDate}
               onChange={(e) => setForm({ ...form, followUpDate: e.target.value })}
             />
             <Textarea
-              label="Internal notes"
+              label={t("visits.internalNotes")}
               value={form.internalNotes}
               onChange={(e) => setForm({ ...form, internalNotes: e.target.value })}
             />
@@ -386,10 +394,10 @@ export function VisitDetailsPage() {
 
             <div className="modal-actions">
               <Button type="button" variant="secondary" onClick={closeModal} disabled={isSaving}>
-                Cancel
+                {t("common.cancel")}
               </Button>
               <Button type="submit" disabled={isSaving}>
-                {isSaving ? "Saving..." : modalMode === "complete" ? "Complete Visit" : "Save"}
+                {isSaving ? t("common.saving") : modalMode === "complete" ? t("visits.completeTitle") : t("common.save")}
               </Button>
             </div>
           </form>

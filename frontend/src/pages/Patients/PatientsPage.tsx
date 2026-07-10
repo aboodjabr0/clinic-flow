@@ -15,7 +15,8 @@ import { StatCard } from "../../components/dashboard/StatCard";
 import { patientsApi } from "../../api/patientsApi";
 import { ApiError } from "../../api/apiClient";
 import { useAuth } from "../../context/AuthContext";
-import { calculateAge, formatDate, GENDER_LABELS } from "../../utils/patient";
+import { useTranslation } from "../../i18n/useTranslation";
+import { calculateAge, formatDate, GENDER_LABEL_KEYS } from "../../utils/patient";
 import type { CreatePatientRequest, Patient, PatientGender, PatientListItem, PatientStats } from "../../types/patient";
 import "./PatientsPage.css";
 
@@ -60,6 +61,7 @@ const EMPTY_FORM: PatientFormState = {
 export function PatientsPage() {
   const { hasAnyRole } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const canManagePatients = hasAnyRole(["Admin", "Receptionist"]);
 
   const [patients, setPatients] = useState<PatientListItem[]>([]);
@@ -103,10 +105,10 @@ export function PatientsPage() {
       setTotalCount(response.data.totalCount);
       setView({ status: "loaded" });
     } catch (error) {
-      const message = error instanceof ApiError ? error.message : "Unable to reach the API.";
+      const message = error instanceof ApiError ? error.message : t("common.unableToReachApi");
       setView({ status: "error", message });
     }
-  }, [search, statusFilter, genderFilter, pageNumber]);
+  }, [search, statusFilter, genderFilter, pageNumber, t]);
 
   const loadStats = useCallback(async () => {
     try {
@@ -158,7 +160,7 @@ export function PatientsPage() {
     } catch (error) {
       setView({
         status: "error",
-        message: error instanceof ApiError ? error.message : "Unable to load patient.",
+        message: error instanceof ApiError ? error.message : t("patients.errorUnableToLoad"),
       });
     }
   }
@@ -172,19 +174,19 @@ export function PatientsPage() {
     event.preventDefault();
 
     if (!form.firstName.trim() || !form.lastName.trim() || !form.phoneNumber.trim()) {
-      setFormError("First name, last name, and phone number are required.");
+      setFormError(t("patients.errorRequired"));
       return;
     }
     if (!form.gender) {
-      setFormError("Gender is required.");
+      setFormError(t("patients.errorGenderRequired"));
       return;
     }
     if (form.email && !/^\S+@\S+\.\S+$/.test(form.email.trim())) {
-      setFormError("Enter a valid email address.");
+      setFormError(t("patients.errorInvalidEmail"));
       return;
     }
     if (form.dateOfBirth && form.dateOfBirth > new Date().toISOString().slice(0, 10)) {
-      setFormError("Date of birth cannot be in the future.");
+      setFormError(t("patients.errorFutureDob"));
       return;
     }
 
@@ -214,7 +216,7 @@ export function PatientsPage() {
       await loadPatients();
       await loadStats();
     } catch (error) {
-      setFormError(error instanceof ApiError ? error.message : "Unable to save patient.");
+      setFormError(error instanceof ApiError ? error.message : t("patients.errorUnableToSave"));
     } finally {
       setIsSaving(false);
     }
@@ -233,24 +235,24 @@ export function PatientsPage() {
   return (
     <>
       <PageHeader
-        title="Patients"
-        subtitle="Manage patient records for the clinic."
-        actions={canManagePatients ? <Button onClick={openCreateModal}>Add Patient</Button> : undefined}
+        title={t("patients.title")}
+        subtitle={t("patients.subtitle")}
+        actions={canManagePatients ? <Button onClick={openCreateModal}>{t("patients.addPatient")}</Button> : undefined}
       />
 
       {stats && (
         <div className="patients-stats">
-          <StatCard label="Total patients" value={stats.totalPatients} />
-          <StatCard label="Active" value={stats.activePatients} />
-          <StatCard label="Inactive" value={stats.inactivePatients} />
-          <StatCard label="New this month" value={stats.newPatientsThisMonth} />
+          <StatCard label={t("patients.statTotal")} value={stats.totalPatients} />
+          <StatCard label={t("patients.statActive")} value={stats.activePatients} />
+          <StatCard label={t("patients.statInactive")} value={stats.inactivePatients} />
+          <StatCard label={t("patients.statNewThisMonth")} value={stats.newPatientsThisMonth} />
         </div>
       )}
 
       <Card>
         <div className="patients-filters">
           <Input
-            placeholder="Search by name, phone, or email..."
+            placeholder={t("patients.searchPlaceholder")}
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
           />
@@ -261,9 +263,9 @@ export function PatientsPage() {
               setPageNumber(1);
             }}
           >
-            <option value="all">All statuses</option>
-            <option value="active">Active</option>
-            <option value="inactive">Inactive</option>
+            <option value="all">{t("patients.allStatuses")}</option>
+            <option value="active">{t("common.active")}</option>
+            <option value="inactive">{t("common.inactive")}</option>
           </Select>
           <Select
             value={genderFilter}
@@ -272,25 +274,25 @@ export function PatientsPage() {
               setPageNumber(1);
             }}
           >
-            <option value="all">All genders</option>
-            {(Object.keys(GENDER_LABELS) as PatientGender[]).map((gender) => (
+            <option value="all">{t("patients.allGenders")}</option>
+            {(Object.keys(GENDER_LABEL_KEYS) as PatientGender[]).map((gender) => (
               <option key={gender} value={gender}>
-                {GENDER_LABELS[gender]}
+                {t(GENDER_LABEL_KEYS[gender])}
               </option>
             ))}
           </Select>
         </div>
 
-        {view.status === "loading" && <LoadingState label="Loading patients..." />}
+        {view.status === "loading" && <LoadingState label={t("patients.loading")} />}
 
         {view.status === "error" && (
-          <EmptyState title="Unable to load patients" description={view.message} />
+          <EmptyState title={t("patients.unableToLoad")} description={view.message} />
         )}
 
         {view.status === "loaded" && patients.length === 0 && (
           <EmptyState
-            title="No patients found"
-            description="Try adjusting your search or filters, or add a new patient."
+            title={t("patients.noneFoundTitle")}
+            description={t("patients.noneFoundDescription")}
           />
         )}
 
@@ -300,14 +302,14 @@ export function PatientsPage() {
               <table className="data-table">
                 <thead>
                   <tr>
-                    <th>Name</th>
-                    <th>Phone</th>
-                    <th>Email</th>
-                    <th>Gender</th>
-                    <th>Age</th>
-                    <th>Status</th>
-                    <th>Created</th>
-                    <th aria-label="Actions" />
+                    <th>{t("table.name")}</th>
+                    <th>{t("table.phone")}</th>
+                    <th>{t("table.email")}</th>
+                    <th>{t("table.gender")}</th>
+                    <th>{t("table.age")}</th>
+                    <th>{t("table.status")}</th>
+                    <th>{t("table.created")}</th>
+                    <th aria-label={t("common.actions")} />
                   </tr>
                 </thead>
                 <tbody>
@@ -318,29 +320,29 @@ export function PatientsPage() {
                         <td>{patient.fullName}</td>
                         <td>{patient.phoneNumber}</td>
                         <td>{patient.email ?? "—"}</td>
-                        <td>{GENDER_LABELS[patient.gender]}</td>
+                        <td>{t(GENDER_LABEL_KEYS[patient.gender])}</td>
                         <td>{age !== null ? age : "—"}</td>
                         <td>
                           <StatusBadge
-                            label={patient.isActive ? "Active" : "Inactive"}
+                            label={patient.isActive ? t("common.active") : t("common.inactive")}
                             variant={patient.isActive ? "success" : "neutral"}
                           />
                         </td>
                         <td>{formatDate(patient.createdAtUtc)}</td>
                         <td className="patients-table-actions">
                           <Button variant="ghost" onClick={() => navigate(`/patients/${patient.id}`)}>
-                            View
+                            {t("common.view")}
                           </Button>
                           {canManagePatients && (
                             <>
                               <Button variant="ghost" onClick={() => openEditModalFor(patient.id)}>
-                                Edit
+                                {t("common.edit")}
                               </Button>
                               <Button
                                 variant={patient.isActive ? "danger" : "secondary"}
                                 onClick={() => handleToggleStatus(patient)}
                               >
-                                {patient.isActive ? "Deactivate" : "Activate"}
+                                {patient.isActive ? t("users.deactivate") : t("users.activate")}
                               </Button>
                             </>
                           )}
@@ -351,7 +353,7 @@ export function PatientsPage() {
                 </tbody>
               </table>
             </div>
-            <p className="patients-result-count">{totalCount} patient(s) found</p>
+            <p className="patients-result-count">{t("patients.countFound", { count: totalCount })}</p>
             <Pagination pageNumber={pageNumber} totalPages={totalPages} onPageChange={setPageNumber} />
           </>
         )}
@@ -359,41 +361,41 @@ export function PatientsPage() {
 
       <Modal
         isOpen={isModalOpen}
-        title={editingPatient ? "Edit Patient" : "Add Patient"}
+        title={editingPatient ? t("patients.editTitle") : t("patients.addTitle")}
         onClose={closeModal}
       >
         <form className="modal-form" onSubmit={handleSubmit}>
           <fieldset className="patients-form-section">
-            <legend>Basic Information</legend>
+            <legend>{t("patients.sectionBasicInfo")}</legend>
             <Input
-              label="First name"
+              label={t("patients.firstName")}
               required
               value={form.firstName}
               onChange={(e) => setForm({ ...form, firstName: e.target.value })}
             />
             <Input
-              label="Last name"
+              label={t("patients.lastName")}
               required
               value={form.lastName}
               onChange={(e) => setForm({ ...form, lastName: e.target.value })}
             />
             <Select
-              label="Gender"
+              label={t("patients.gender")}
               required
               value={form.gender}
               onChange={(e) => setForm({ ...form, gender: e.target.value as PatientGender })}
             >
               <option value="" disabled>
-                Select gender
+                {t("patients.selectGender")}
               </option>
-              {(Object.keys(GENDER_LABELS) as PatientGender[]).map((gender) => (
+              {(Object.keys(GENDER_LABEL_KEYS) as PatientGender[]).map((gender) => (
                 <option key={gender} value={gender}>
-                  {GENDER_LABELS[gender]}
+                  {t(GENDER_LABEL_KEYS[gender])}
                 </option>
               ))}
             </Select>
             <Input
-              label="Date of birth"
+              label={t("patients.dateOfBirth")}
               type="date"
               max={new Date().toISOString().slice(0, 10)}
               value={form.dateOfBirth}
@@ -402,45 +404,45 @@ export function PatientsPage() {
           </fieldset>
 
           <fieldset className="patients-form-section">
-            <legend>Contact Information</legend>
+            <legend>{t("patients.sectionContactInfo")}</legend>
             <Input
-              label="Phone number"
+              label={t("patients.phoneNumber")}
               required
               value={form.phoneNumber}
               onChange={(e) => setForm({ ...form, phoneNumber: e.target.value })}
             />
             <Input
-              label="Email"
+              label={t("patients.email")}
               type="email"
               value={form.email}
               onChange={(e) => setForm({ ...form, email: e.target.value })}
             />
             <Input
-              label="Address"
+              label={t("patients.address")}
               value={form.address}
               onChange={(e) => setForm({ ...form, address: e.target.value })}
             />
             <Input
-              label="Emergency contact name"
+              label={t("patients.emergencyContactName")}
               value={form.emergencyContactName}
               onChange={(e) => setForm({ ...form, emergencyContactName: e.target.value })}
             />
             <Input
-              label="Emergency contact phone"
+              label={t("patients.emergencyContactPhone")}
               value={form.emergencyContactPhone}
               onChange={(e) => setForm({ ...form, emergencyContactPhone: e.target.value })}
             />
           </fieldset>
 
           <fieldset className="patients-form-section">
-            <legend>Medical Notes</legend>
+            <legend>{t("patients.sectionMedicalNotes")}</legend>
             <Textarea
-              label="Allergies"
+              label={t("patients.allergies")}
               value={form.allergies}
               onChange={(e) => setForm({ ...form, allergies: e.target.value })}
             />
             <Textarea
-              label="Medical notes"
+              label={t("patients.medicalNotes")}
               value={form.medicalNotes}
               onChange={(e) => setForm({ ...form, medicalNotes: e.target.value })}
             />
@@ -450,10 +452,10 @@ export function PatientsPage() {
 
           <div className="modal-actions">
             <Button type="button" variant="secondary" onClick={closeModal} disabled={isSaving}>
-              Cancel
+              {t("common.cancel")}
             </Button>
             <Button type="submit" disabled={isSaving}>
-              {isSaving ? "Saving..." : "Save"}
+              {isSaving ? t("common.saving") : t("common.save")}
             </Button>
           </div>
         </form>

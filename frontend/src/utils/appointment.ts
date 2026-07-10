@@ -1,13 +1,14 @@
 import type { AppointmentStatus } from "../types/appointment";
 import type { UserRole } from "../types/auth";
+import type { TranslationKey } from "../i18n/translations";
 
-export const APPOINTMENT_STATUS_LABELS: Record<AppointmentStatus, string> = {
-  Scheduled: "Scheduled",
-  Arrived: "Arrived",
-  InProgress: "In Progress",
-  Completed: "Completed",
-  Cancelled: "Cancelled",
-  NoShow: "No Show",
+export const APPOINTMENT_STATUS_LABEL_KEYS: Record<AppointmentStatus, TranslationKey> = {
+  Scheduled: "status.appointment.scheduled",
+  Arrived: "status.appointment.arrived",
+  InProgress: "status.appointment.inProgress",
+  Completed: "status.appointment.completed",
+  Cancelled: "status.appointment.cancelled",
+  NoShow: "status.appointment.noShow",
 };
 
 export const APPOINTMENT_STATUS_VARIANTS: Record<AppointmentStatus, "success" | "warning" | "danger" | "neutral"> = {

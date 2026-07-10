@@ -6,7 +6,8 @@ import { Textarea } from "../common/Textarea";
 import { Modal } from "../common/Modal";
 import { invoicesApi } from "../../api/invoicesApi";
 import { ApiError } from "../../api/apiClient";
-import { ALL_PAYMENT_METHODS, PAYMENT_METHOD_LABELS, formatMoney } from "../../utils/invoice";
+import { useTranslation } from "../../i18n/useTranslation";
+import { ALL_PAYMENT_METHODS, PAYMENT_METHOD_LABEL_KEYS, formatMoney } from "../../utils/invoice";
 import type { Invoice, PaymentMethod } from "../../types/invoice";
 import "./invoices.css";
 
@@ -31,6 +32,7 @@ export function AddPaymentModal({
   invoiceNumber,
   remainingAmount,
 }: AddPaymentModalProps) {
+  const { t } = useTranslation();
   const [amount, setAmount] = useState("");
   const [paymentDate, setPaymentDate] = useState(todayIsoDate());
   const [method, setMethod] = useState<PaymentMethod>("Cash");
@@ -59,15 +61,15 @@ export function AddPaymentModal({
 
     const amountValue = Number(amount);
     if (amount.trim() === "" || Number.isNaN(amountValue) || amountValue <= 0) {
-      setFormError("Payment amount must be greater than zero.");
+      setFormError(t("addPaymentModal.errorAmountPositive"));
       return;
     }
     if (amountValue > remainingAmount) {
-      setFormError(`Payment amount cannot exceed the remaining balance (${formatMoney(remainingAmount)}).`);
+      setFormError(t("addPaymentModal.errorAmountExceeds", { amount: formatMoney(remainingAmount) }));
       return;
     }
     if (!paymentDate) {
-      setFormError("Payment date is required.");
+      setFormError(t("addPaymentModal.errorDateRequired"));
       return;
     }
 
@@ -83,19 +85,19 @@ export function AddPaymentModal({
       });
       onSaved(response.data);
     } catch (error) {
-      setFormError(error instanceof ApiError ? error.message : "Unable to record payment.");
+      setFormError(error instanceof ApiError ? error.message : t("addPaymentModal.errorUnableToSave"));
     } finally {
       setIsSaving(false);
     }
   }
 
   return (
-    <Modal isOpen={isOpen} title={`Add Payment — ${invoiceNumber}`} onClose={closeModal}>
+    <Modal isOpen={isOpen} title={t("addPaymentModal.titleWithInvoice", { invoiceNumber })} onClose={closeModal}>
       <form className="modal-form" onSubmit={handleSubmit}>
-        <p className="invoice-form-note">Remaining balance: {formatMoney(remainingAmount)}</p>
+        <p className="invoice-form-note">{t("addPaymentModal.remainingBalance", { amount: formatMoney(remainingAmount) })}</p>
 
         <Input
-          label="Amount"
+          label={t("addPaymentModal.amount")}
           type="number"
           min="0.01"
           step="0.01"
@@ -103,33 +105,37 @@ export function AddPaymentModal({
           onChange={(e) => setAmount(e.target.value)}
         />
         <Input
-          label="Payment date"
+          label={t("addPaymentModal.paymentDate")}
           type="date"
           value={paymentDate}
           onChange={(e) => setPaymentDate(e.target.value)}
         />
-        <Select label="Method" value={method} onChange={(e) => setMethod(e.target.value as PaymentMethod)}>
+        <Select label={t("addPaymentModal.method")} value={method} onChange={(e) => setMethod(e.target.value as PaymentMethod)}>
           {ALL_PAYMENT_METHODS.map((paymentMethod) => (
             <option key={paymentMethod} value={paymentMethod}>
-              {PAYMENT_METHOD_LABELS[paymentMethod]}
+              {t(PAYMENT_METHOD_LABEL_KEYS[paymentMethod])}
             </option>
           ))}
         </Select>
         <Input
-          label="Reference number (optional)"
+          label={t("addPaymentModal.referenceOptional")}
           value={referenceNumber}
           onChange={(e) => setReferenceNumber(e.target.value)}
         />
-        <Textarea label="Notes (optional)" value={notes} onChange={(e) => setNotes(e.target.value)} />
+        <Textarea
+          label={t("addPaymentModal.notesOptional")}
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+        />
 
         {formError && <p className="invoice-form-error">{formError}</p>}
 
         <div className="modal-actions">
           <Button type="button" variant="secondary" onClick={closeModal} disabled={isSaving}>
-            Cancel
+            {t("common.cancel")}
           </Button>
           <Button type="submit" disabled={isSaving}>
-            {isSaving ? "Saving..." : "Record Payment"}
+            {isSaving ? t("common.saving") : t("addPaymentModal.recordPayment")}
           </Button>
         </div>
       </form>

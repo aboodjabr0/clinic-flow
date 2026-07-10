@@ -5,12 +5,14 @@ import { Input } from "../../components/common/Input";
 import { Button } from "../../components/common/Button";
 import { useAuth } from "../../context/AuthContext";
 import { ApiError } from "../../api/apiClient";
+import { useTranslation } from "../../i18n/useTranslation";
 import "./LoginPage.css";
 
 export function LoginPage() {
   const { login, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useTranslation();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -28,7 +30,7 @@ export function LoginPage() {
     setError(null);
 
     if (!email || !password) {
-      setError("Email and password are required.");
+      setError(t("login.errorRequired"));
       return;
     }
 
@@ -37,7 +39,7 @@ export function LoginPage() {
       await login(email, password);
       navigate(redirectFrom ?? "/dashboard", { replace: true });
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Unable to sign in. Please try again.");
+      setError(err instanceof ApiError ? err.message : t("login.errorGeneric"));
     } finally {
       setIsSubmitting(false);
     }
@@ -50,11 +52,11 @@ export function LoginPage() {
           <span className="login-brand-mark">CF</span>
           <span className="login-brand-name">ClinicFlow</span>
         </div>
-        <p className="login-subtitle">Sign in to manage your clinic.</p>
+        <p className="login-subtitle">{t("login.subtitle")}</p>
 
         <form className="login-form" onSubmit={handleSubmit}>
           <Input
-            label="Email"
+            label={t("login.email")}
             type="email"
             placeholder="you@clinic.com"
             value={email}
@@ -63,7 +65,7 @@ export function LoginPage() {
             autoComplete="email"
           />
           <Input
-            label="Password"
+            label={t("login.password")}
             type="password"
             placeholder="••••••••"
             value={password}
@@ -73,11 +75,11 @@ export function LoginPage() {
             error={error ?? undefined}
           />
           <Button type="submit" fullWidth disabled={isSubmitting}>
-            {isSubmitting ? "Signing in..." : "Sign in"}
+            {isSubmitting ? t("login.signingIn") : t("login.signIn")}
           </Button>
         </form>
 
-        <p className="login-note">Demo credentials: admin@clinicflow.local / Admin@12345!</p>
+        <p className="login-note">{t("login.demoCredentials")}</p>
       </Card>
     </div>
   );

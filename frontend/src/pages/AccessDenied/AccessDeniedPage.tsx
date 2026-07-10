@@ -3,20 +3,22 @@ import { PageHeader } from "../../components/common/PageHeader";
 import { Card } from "../../components/common/Card";
 import { EmptyState } from "../../components/common/EmptyState";
 import { Button } from "../../components/common/Button";
+import { useTranslation } from "../../i18n/useTranslation";
 
 export function AccessDeniedPage() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   return (
     <>
-      <PageHeader title="Access denied" subtitle="You don't have permission to view this page." />
+      <PageHeader title={t("accessDenied.title")} subtitle={t("accessDenied.subtitle")} />
       <Card>
         <EmptyState
-          title="Access denied"
-          description="Your account role doesn't have permission to access this section."
+          title={t("accessDenied.title")}
+          description={t("accessDenied.description")}
           action={
             <Button variant="secondary" onClick={() => navigate("/dashboard")}>
-              Back to Dashboard
+              {t("accessDenied.backToDashboard")}
             </Button>
           }
         />

@@ -1,10 +1,11 @@
 import type { PatientGender } from "../types/patient";
+import type { TranslationKey } from "../i18n/translations";
 
-export const GENDER_LABELS: Record<PatientGender, string> = {
-  Male: "Male",
-  Female: "Female",
-  Other: "Other",
-  PreferNotToSay: "Prefer not to say",
+export const GENDER_LABEL_KEYS: Record<PatientGender, TranslationKey> = {
+  Male: "status.gender.male",
+  Female: "status.gender.female",
+  Other: "status.gender.other",
+  PreferNotToSay: "status.gender.preferNotToSay",
 };
 
 export function calculateAge(dateOfBirth: string | null): number | null {

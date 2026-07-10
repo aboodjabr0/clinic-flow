@@ -16,10 +16,11 @@ import { invoicesApi } from "../../api/invoicesApi";
 import { patientsApi } from "../../api/patientsApi";
 import { ApiError } from "../../api/apiClient";
 import { useAuth } from "../../context/AuthContext";
+import { useTranslation } from "../../i18n/useTranslation";
 import { formatDate } from "../../utils/patient";
 import {
   ALL_PAYMENT_STATUSES,
-  PAYMENT_STATUS_LABELS,
+  PAYMENT_STATUS_LABEL_KEYS,
   PAYMENT_STATUS_VARIANTS,
   formatMoney,
 } from "../../utils/invoice";
@@ -39,6 +40,7 @@ const PAGE_SIZE = 10;
 export function InvoicesPage() {
   const { hasAnyRole } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
   const canManageInvoices = hasAnyRole(["Admin", "Receptionist"]);
   const patientIdFilter = searchParams.get("patientId");
@@ -86,10 +88,10 @@ export function InvoicesPage() {
       setTotalCount(response.data.totalCount);
       setView({ status: "loaded" });
     } catch (error) {
-      const message = error instanceof ApiError ? error.message : "Unable to reach the API.";
+      const message = error instanceof ApiError ? error.message : t("invoices.errorReachApi");
       setView({ status: "error", message });
     }
-  }, [search, fromDate, toDate, statusFilter, patientIdFilter, pageNumber]);
+  }, [search, fromDate, toDate, statusFilter, patientIdFilter, pageNumber, t]);
 
   const loadStats = useCallback(async () => {
     try {
@@ -145,12 +147,12 @@ export function InvoicesPage() {
   return (
     <>
       <PageHeader
-        title="Invoices"
-        subtitle="Track invoices and payments."
+        title={t("invoices.title")}
+        subtitle={t("invoices.subtitle")}
         actions={
           canManageInvoices ? (
             <Button variant="primary" onClick={() => setIsCreateModalOpen(true)}>
-              Create Invoice
+              {t("invoices.createInvoice")}
             </Button>
           ) : undefined
         }
@@ -158,12 +160,12 @@ export function InvoicesPage() {
 
       {stats && (
         <div className="invoices-stats">
-          <StatCard label="Total Invoices" value={stats.totalInvoices} />
-          <StatCard label="Unpaid" value={stats.unpaidInvoices} />
-          <StatCard label="Partially Paid" value={stats.partiallyPaidInvoices} />
-          <StatCard label="Paid" value={stats.paidInvoices} />
-          <StatCard label="Total Revenue" value={formatMoney(stats.totalRevenue)} />
-          <StatCard label="Outstanding Balance" value={formatMoney(stats.outstandingBalance)} />
+          <StatCard label={t("invoices.statTotalInvoices")} value={stats.totalInvoices} />
+          <StatCard label={t("invoices.statUnpaid")} value={stats.unpaidInvoices} />
+          <StatCard label={t("invoices.statPartiallyPaid")} value={stats.partiallyPaidInvoices} />
+          <StatCard label={t("invoices.statPaid")} value={stats.paidInvoices} />
+          <StatCard label={t("invoices.statTotalRevenue")} value={formatMoney(stats.totalRevenue)} />
+          <StatCard label={t("invoices.statOutstandingBalance")} value={formatMoney(stats.outstandingBalance)} />
         </div>
       )}
 
@@ -171,17 +173,17 @@ export function InvoicesPage() {
         {patientIdFilter && (
           <div className="invoices-patient-filter-banner">
             <span>
-              Showing invoices for{" "}
-              <strong>{patients.find((p) => p.id === patientIdFilter)?.fullName ?? "selected patient"}</strong>
+              {t("invoices.showingFor")}{" "}
+              <strong>{patients.find((p) => p.id === patientIdFilter)?.fullName ?? t("invoices.selectedPatient")}</strong>
             </span>
             <Button variant="ghost" onClick={clearFilters}>
-              Clear
+              {t("common.clear")}
             </Button>
           </div>
         )}
         <div className="invoices-filters">
           <Input
-            placeholder="Search by invoice number, patient, phone, service..."
+            placeholder={t("invoices.searchPlaceholder")}
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
           />
@@ -208,29 +210,29 @@ export function InvoicesPage() {
               setPageNumber(1);
             }}
           >
-            <option value="all">All statuses</option>
+            <option value="all">{t("invoices.allStatuses")}</option>
             {ALL_PAYMENT_STATUSES.map((status) => (
               <option key={status} value={status}>
-                {PAYMENT_STATUS_LABELS[status]}
+                {t(PAYMENT_STATUS_LABEL_KEYS[status])}
               </option>
             ))}
           </Select>
           <Button type="button" variant="ghost" onClick={clearFilters}>
-            Clear
+            {t("common.clear")}
           </Button>
         </div>
 
-        {view.status === "loading" && <LoadingState label="Loading invoices..." />}
+        {view.status === "loading" && <LoadingState label={t("invoices.loading")} />}
 
-        {view.status === "error" && <EmptyState title="Unable to load invoices" description={view.message} />}
+        {view.status === "error" && <EmptyState title={t("invoices.unableToLoad")} description={view.message} />}
 
         {view.status === "loaded" && invoices.length === 0 && (
           <EmptyState
-            title="No invoices found"
+            title={t("invoices.noneFoundTitle")}
             description={
               canManageInvoices
-                ? "Try adjusting your search or filters, or create the first invoice."
-                : "Try adjusting your search or filters."
+                ? t("invoices.noneFoundDescriptionCreate")
+                : t("invoices.noneFoundDescriptionFilters")
             }
           />
         )}
@@ -241,16 +243,16 @@ export function InvoicesPage() {
               <table className="data-table">
                 <thead>
                   <tr>
-                    <th>Invoice #</th>
-                    <th>Patient</th>
-                    <th>Phone</th>
-                    <th>Service</th>
-                    <th>Issue Date</th>
-                    <th className="num">Total</th>
-                    <th className="num">Paid</th>
-                    <th className="num">Remaining</th>
-                    <th>Status</th>
-                    <th aria-label="Actions" />
+                    <th>{t("table.invoiceNumber")}</th>
+                    <th>{t("table.patient")}</th>
+                    <th>{t("table.phone")}</th>
+                    <th>{t("table.service")}</th>
+                    <th>{t("table.issueDate")}</th>
+                    <th className="num">{t("table.total")}</th>
+                    <th className="num">{t("table.paid")}</th>
+                    <th className="num">{t("table.remaining")}</th>
+                    <th>{t("table.status")}</th>
+                    <th aria-label={t("common.actions")} />
                   </tr>
                 </thead>
                 <tbody>
@@ -266,17 +268,17 @@ export function InvoicesPage() {
                       <td className="num invoices-remaining">{formatMoney(invoice.remainingAmount)}</td>
                       <td>
                         <StatusBadge
-                          label={PAYMENT_STATUS_LABELS[invoice.status]}
+                          label={t(PAYMENT_STATUS_LABEL_KEYS[invoice.status])}
                           variant={PAYMENT_STATUS_VARIANTS[invoice.status]}
                         />
                       </td>
                       <td className="invoices-table-actions">
                         <Button variant="ghost" onClick={() => navigate(`/invoices/${invoice.id}`)}>
-                          View
+                          {t("common.view")}
                         </Button>
                         {canManageInvoices && invoice.remainingAmount > 0 && (
                           <Button variant="primary" onClick={() => setPaymentInvoice(invoice)}>
-                            Add Payment
+                            {t("invoices.addPayment")}
                           </Button>
                         )}
                       </td>
@@ -285,7 +287,7 @@ export function InvoicesPage() {
                 </tbody>
               </table>
             </div>
-            <p className="invoices-result-count">{totalCount} invoice(s) found</p>
+            <p className="invoices-result-count">{t("invoices.countFound", { count: totalCount })}</p>
             <Pagination pageNumber={pageNumber} totalPages={totalPages} onPageChange={setPageNumber} />
           </>
         )}

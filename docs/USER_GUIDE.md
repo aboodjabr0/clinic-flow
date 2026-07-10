@@ -4,6 +4,8 @@ How each role uses ClinicFlow day to day. All demo logins and data are fake; see
 
 Signing in: open the app, enter your email and password. Sessions last 60 minutes by default; after expiry you are returned to the login page. The sidebar only shows the pages your role can use, and the backend independently enforces the same permissions.
 
+**Language:** ClinicFlow is available in English and Arabic. Switch languages with the **EN / عربي** toggle in the topbar — available to every role. Arabic switches the whole layout to right-to-left (RTL); English stays left-to-right. Your choice is remembered in the browser (`localStorage`) and applies immediately, without a page reload.
+
 ## Roles at a Glance
 
 | Page | Admin | Receptionist | Doctor |

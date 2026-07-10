@@ -17,8 +17,9 @@ import { doctorsApi } from "../../api/doctorsApi";
 import { patientsApi } from "../../api/patientsApi";
 import { ApiError } from "../../api/apiClient";
 import { useAuth } from "../../context/AuthContext";
+import { useTranslation } from "../../i18n/useTranslation";
 import { formatDate } from "../../utils/patient";
-import { ALL_VISIT_STATUSES, VISIT_STATUS_LABELS, VISIT_STATUS_VARIANTS } from "../../utils/visit";
+import { ALL_VISIT_STATUSES, VISIT_STATUS_LABEL_KEYS, VISIT_STATUS_VARIANTS } from "../../utils/visit";
 import type { Doctor } from "../../types/doctor";
 import type { PatientListItem } from "../../types/patient";
 import type { UpdateVisitRequest, Visit, VisitListItem, VisitStats, VisitStatus } from "../../types/visit";
@@ -56,6 +57,7 @@ const EMPTY_FORM: VisitFormState = {
 export function VisitsPage() {
   const { hasAnyRole } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
   const canManageVisits = hasAnyRole(["Admin", "Doctor"]);
   const patientIdFilter = searchParams.get("patientId");
@@ -110,10 +112,10 @@ export function VisitsPage() {
       setTotalCount(response.data.totalCount);
       setView({ status: "loaded" });
     } catch (error) {
-      const message = error instanceof ApiError ? error.message : "Unable to reach the API.";
+      const message = error instanceof ApiError ? error.message : t("visits.errorReachApi");
       setView({ status: "error", message });
     }
-  }, [search, fromDate, toDate, doctorFilter, statusFilter, patientIdFilter, pageNumber]);
+  }, [search, fromDate, toDate, doctorFilter, statusFilter, patientIdFilter, pageNumber, t]);
 
   const loadStats = useCallback(async () => {
     try {
@@ -170,7 +172,7 @@ export function VisitsPage() {
       setForm(fillFormFromVisit(response.data));
     } catch (error) {
       setForm(EMPTY_FORM);
-      setFormError(error instanceof ApiError ? error.message : "Unable to load existing visit notes.");
+      setFormError(error instanceof ApiError ? error.message : t("visits.errorLoadExisting"));
     }
     setIsModalOpen(true);
   }
@@ -206,7 +208,7 @@ export function VisitsPage() {
       await loadVisits();
       await loadStats();
     } catch (error) {
-      setFormError(error instanceof ApiError ? error.message : "Unable to save visit.");
+      setFormError(error instanceof ApiError ? error.message : t("visits.errorUnableToSave"));
     } finally {
       setIsSaving(false);
     }
@@ -230,14 +232,14 @@ export function VisitsPage() {
 
   return (
     <>
-      <PageHeader title="Visits" subtitle="Review dental visit notes and prescriptions." />
+      <PageHeader title={t("visits.title")} subtitle={t("visits.subtitle")} />
 
       {stats && (
         <div className="visits-stats">
-          <StatCard label="Total" value={stats.totalVisits} />
-          <StatCard label="In Progress" value={stats.inProgressVisits} />
-          <StatCard label="Completed" value={stats.completedVisits} />
-          <StatCard label="Follow-ups Scheduled" value={stats.followUpsScheduled} />
+          <StatCard label={t("visits.statTotal")} value={stats.totalVisits} />
+          <StatCard label={t("visits.statInProgress")} value={stats.inProgressVisits} />
+          <StatCard label={t("visits.statCompleted")} value={stats.completedVisits} />
+          <StatCard label={t("visits.statFollowUpsScheduled")} value={stats.followUpsScheduled} />
         </div>
       )}
 
@@ -245,17 +247,17 @@ export function VisitsPage() {
         {patientIdFilter && (
           <div className="visits-patient-filter-banner">
             <span>
-              Showing visits for{" "}
-              <strong>{patients.find((p) => p.id === patientIdFilter)?.fullName ?? "selected patient"}</strong>
+              {t("visits.showingFor")}{" "}
+              <strong>{patients.find((p) => p.id === patientIdFilter)?.fullName ?? t("visits.selectedPatient")}</strong>
             </span>
             <Button variant="ghost" onClick={clearFilters}>
-              Clear
+              {t("common.clear")}
             </Button>
           </div>
         )}
         <div className="visits-filters">
           <Input
-            placeholder="Search by patient, doctor, service, notes..."
+            placeholder={t("visits.searchPlaceholder")}
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
           />
@@ -282,10 +284,10 @@ export function VisitsPage() {
               setPageNumber(1);
             }}
           >
-            <option value="all">All statuses</option>
+            <option value="all">{t("visits.allStatuses")}</option>
             {ALL_VISIT_STATUSES.map((status) => (
               <option key={status} value={status}>
-                {VISIT_STATUS_LABELS[status]}
+                {t(VISIT_STATUS_LABEL_KEYS[status])}
               </option>
             ))}
           </Select>
@@ -296,7 +298,7 @@ export function VisitsPage() {
               setPageNumber(1);
             }}
           >
-            <option value="all">All doctors</option>
+            <option value="all">{t("visits.allDoctors")}</option>
             {doctors.map((doctor) => (
               <option key={doctor.id} value={doctor.id}>
                 {doctor.fullName}
@@ -304,18 +306,18 @@ export function VisitsPage() {
             ))}
           </Select>
           <Button type="button" variant="ghost" onClick={clearFilters}>
-            Clear
+            {t("common.clear")}
           </Button>
         </div>
 
-        {view.status === "loading" && <LoadingState label="Loading visits..." />}
+        {view.status === "loading" && <LoadingState label={t("visits.loading")} />}
 
-        {view.status === "error" && <EmptyState title="Unable to load visits" description={view.message} />}
+        {view.status === "error" && <EmptyState title={t("visits.unableToLoad")} description={view.message} />}
 
         {view.status === "loaded" && visits.length === 0 && (
           <EmptyState
-            title="No visits found"
-            description="Try adjusting your search or filters. Visits are created by starting one from an appointment."
+            title={t("visits.noneFoundTitle")}
+            description={t("visits.noneFoundDescription")}
           />
         )}
 
@@ -325,14 +327,14 @@ export function VisitsPage() {
               <table className="data-table">
                 <thead>
                   <tr>
-                    <th>Visit Date</th>
-                    <th>Patient</th>
-                    <th>Phone</th>
-                    <th>Doctor</th>
-                    <th>Service</th>
-                    <th>Status</th>
-                    <th>Follow-up</th>
-                    <th aria-label="Actions" />
+                    <th>{t("table.visitDate")}</th>
+                    <th>{t("table.patient")}</th>
+                    <th>{t("table.phone")}</th>
+                    <th>{t("table.doctor")}</th>
+                    <th>{t("table.service")}</th>
+                    <th>{t("table.status")}</th>
+                    <th>{t("table.followUp")}</th>
+                    <th aria-label={t("common.actions")} />
                   </tr>
                 </thead>
                 <tbody>
@@ -345,23 +347,23 @@ export function VisitsPage() {
                       <td>{visit.serviceName}</td>
                       <td>
                         <StatusBadge
-                          label={VISIT_STATUS_LABELS[visit.status]}
+                          label={t(VISIT_STATUS_LABEL_KEYS[visit.status])}
                           variant={VISIT_STATUS_VARIANTS[visit.status]}
                         />
                       </td>
                       <td>{visit.followUpDate ? formatDate(visit.followUpDate) : "—"}</td>
                       <td className="visits-table-actions">
                         <Button variant="ghost" onClick={() => navigate(`/visits/${visit.id}`)}>
-                          View
+                          {t("common.view")}
                         </Button>
                         {canManageVisits && (
                           <Button variant="ghost" onClick={() => openVisitModal(visit, "edit")}>
-                            Edit
+                            {t("common.edit")}
                           </Button>
                         )}
                         {canManageVisits && visit.status === "InProgress" && (
                           <Button variant="primary" onClick={() => openVisitModal(visit, "complete")}>
-                            Complete
+                            {t("visits.complete")}
                           </Button>
                         )}
                       </td>
@@ -370,7 +372,7 @@ export function VisitsPage() {
                 </tbody>
               </table>
             </div>
-            <p className="visits-result-count">{totalCount} visit(s) found</p>
+            <p className="visits-result-count">{t("visits.countFound", { count: totalCount })}</p>
             <Pagination pageNumber={pageNumber} totalPages={totalPages} onPageChange={setPageNumber} />
           </>
         )}
@@ -378,47 +380,45 @@ export function VisitsPage() {
 
       <Modal
         isOpen={isModalOpen}
-        title={modalMode === "complete" ? "Complete Visit" : "Edit Visit"}
+        title={modalMode === "complete" ? t("visits.completeTitle") : t("visits.editTitle")}
         onClose={closeModal}
       >
         <form className="modal-form" onSubmit={handleSubmit}>
-          <p className="visits-form-note">
-            Doctor-entered notes. The system does not generate diagnosis or treatment suggestions.
-          </p>
+          <p className="visits-form-note">{t("visits.doctorNoteDisclaimer")}</p>
 
           <Textarea
-            label="Chief complaint"
+            label={t("visits.chiefComplaint")}
             value={form.chiefComplaint}
             onChange={(e) => setForm({ ...form, chiefComplaint: e.target.value })}
           />
           <Textarea
-            label="Diagnosis note"
+            label={t("visits.diagnosisNote")}
             value={form.diagnosisNote}
             onChange={(e) => setForm({ ...form, diagnosisNote: e.target.value })}
           />
           <Textarea
-            label="Treatment note"
+            label={t("visits.treatmentNote")}
             value={form.treatmentNote}
             onChange={(e) => setForm({ ...form, treatmentNote: e.target.value })}
           />
           <Input
-            label="Tooth numbers"
+            label={t("visits.toothNumbers")}
             value={form.toothNumbers}
             onChange={(e) => setForm({ ...form, toothNumbers: e.target.value })}
           />
           <Textarea
-            label="Prescription (entered manually by doctor)"
+            label={t("visits.prescription")}
             value={form.prescriptionNote}
             onChange={(e) => setForm({ ...form, prescriptionNote: e.target.value })}
           />
           <Input
-            label="Follow-up date"
+            label={t("visits.followUpDate")}
             type="date"
             value={form.followUpDate}
             onChange={(e) => setForm({ ...form, followUpDate: e.target.value })}
           />
           <Textarea
-            label="Internal notes"
+            label={t("visits.internalNotes")}
             value={form.internalNotes}
             onChange={(e) => setForm({ ...form, internalNotes: e.target.value })}
           />
@@ -427,10 +427,10 @@ export function VisitsPage() {
 
           <div className="modal-actions">
             <Button type="button" variant="secondary" onClick={closeModal} disabled={isSaving}>
-              Cancel
+              {t("common.cancel")}
             </Button>
             <Button type="submit" disabled={isSaving}>
-              {isSaving ? "Saving..." : modalMode === "complete" ? "Complete Visit" : "Save"}
+              {isSaving ? t("common.saving") : modalMode === "complete" ? t("visits.completeTitle") : t("common.save")}
             </Button>
           </div>
         </form>

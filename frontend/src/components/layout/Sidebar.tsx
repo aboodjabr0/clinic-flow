@@ -1,20 +1,22 @@
 import { NavLink } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import { useTranslation } from "../../i18n/useTranslation";
+import type { TranslationKey } from "../../i18n/translations";
 import type { UserRole } from "../../types/auth";
 import "./Sidebar.css";
 
-const NAV_ITEMS: { to: string; label: string; roles?: UserRole[] }[] = [
-  { to: "/dashboard", label: "Dashboard" },
-  { to: "/patients", label: "Patients" },
-  { to: "/appointments", label: "Appointments" },
-  { to: "/doctors", label: "Doctors" },
-  { to: "/services", label: "Services" },
-  { to: "/visits", label: "Visits" },
-  { to: "/invoices", label: "Invoices" },
-  { to: "/reports", label: "Reports" },
-  { to: "/settings", label: "Settings", roles: ["Admin"] },
-  { to: "/audit-logs", label: "Audit Logs", roles: ["Admin"] },
-  { to: "/users", label: "User Management", roles: ["Admin"] },
+const NAV_ITEMS: { to: string; labelKey: TranslationKey; roles?: UserRole[] }[] = [
+  { to: "/dashboard", labelKey: "nav.dashboard" },
+  { to: "/patients", labelKey: "nav.patients" },
+  { to: "/appointments", labelKey: "nav.appointments" },
+  { to: "/doctors", labelKey: "nav.doctors" },
+  { to: "/services", labelKey: "nav.services" },
+  { to: "/visits", labelKey: "nav.visits" },
+  { to: "/invoices", labelKey: "nav.invoices" },
+  { to: "/reports", labelKey: "nav.reports" },
+  { to: "/settings", labelKey: "nav.settings", roles: ["Admin"] },
+  { to: "/audit-logs", labelKey: "nav.auditLogs", roles: ["Admin"] },
+  { to: "/users", labelKey: "nav.users", roles: ["Admin"] },
 ];
 
 interface SidebarProps {
@@ -24,6 +26,7 @@ interface SidebarProps {
 
 export function Sidebar({ isOpen, onNavigate }: SidebarProps) {
   const { hasAnyRole } = useAuth();
+  const { t } = useTranslation();
   const visibleItems = NAV_ITEMS.filter((item) => !item.roles || hasAnyRole(item.roles));
 
   return (
@@ -40,7 +43,7 @@ export function Sidebar({ isOpen, onNavigate }: SidebarProps) {
             onClick={onNavigate}
             className={({ isActive }) => `sidebar-link ${isActive ? "sidebar-link-active" : ""}`}
           >
-            {item.label}
+            {t(item.labelKey)}
           </NavLink>
         ))}
       </nav>

@@ -31,6 +31,7 @@ ClinicFlow is a clinic *operations* system. It deliberately provides **no diagno
 - **User management** — Admin-only staff account management: create/edit staff, activate/deactivate, reset passwords, optionally link Doctor accounts to a doctor profile.
 - **Clinic settings** — clinic name, contact info, opening hours, default currency.
 - **Responsive UI** with light/dark theme.
+- **Bilingual UI (English / Arabic)** — language toggle in the topbar, full RTL layout for Arabic, language preference stored locally in the browser.
 
 ## Tech Stack
 

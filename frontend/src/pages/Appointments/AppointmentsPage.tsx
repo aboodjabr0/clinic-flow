@@ -19,10 +19,11 @@ import { dentalServicesApi } from "../../api/dentalServicesApi";
 import { patientsApi } from "../../api/patientsApi";
 import { ApiError } from "../../api/apiClient";
 import { useAuth } from "../../context/AuthContext";
+import { useTranslation } from "../../i18n/useTranslation";
 import { formatDate } from "../../utils/patient";
 import {
   ALL_APPOINTMENT_STATUSES,
-  APPOINTMENT_STATUS_LABELS,
+  APPOINTMENT_STATUS_LABEL_KEYS,
   APPOINTMENT_STATUS_VARIANTS,
   addMinutesToTime,
   getAllowedStatusTransitions,
@@ -77,6 +78,7 @@ function todayIso(): string {
 export function AppointmentsPage() {
   const { user, hasAnyRole } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
   const canManageAppointments = hasAnyRole(["Admin", "Receptionist"]);
   const canManageVisits = hasAnyRole(["Admin", "Doctor"]);
@@ -135,10 +137,10 @@ export function AppointmentsPage() {
       setTotalCount(response.data.totalCount);
       setView({ status: "loaded" });
     } catch (error) {
-      const message = error instanceof ApiError ? error.message : "Unable to reach the API.";
+      const message = error instanceof ApiError ? error.message : t("appointments.errorReachApi");
       setView({ status: "error", message });
     }
-  }, [search, dateFilter, doctorFilter, statusFilter, patientIdFilter, pageNumber]);
+  }, [search, dateFilter, doctorFilter, statusFilter, patientIdFilter, pageNumber, t]);
 
   const loadStats = useCallback(async () => {
     try {
@@ -209,7 +211,7 @@ export function AppointmentsPage() {
     } catch (error) {
       setView({
         status: "error",
-        message: error instanceof ApiError ? error.message : "Unable to load appointment.",
+        message: error instanceof ApiError ? error.message : t("appointments.errorUnableToLoad"),
       });
     }
   }
@@ -241,19 +243,19 @@ export function AppointmentsPage() {
     event.preventDefault();
 
     if (!form.patientId || !form.doctorProfileId || !form.dentalServiceId) {
-      setFormError("Patient, doctor, and service are required.");
+      setFormError(t("appointments.errorRequiredFields"));
       return;
     }
     if (!form.appointmentDate) {
-      setFormError("Appointment date is required.");
+      setFormError(t("appointments.errorDateRequired"));
       return;
     }
     if (!form.startTime || !form.endTime) {
-      setFormError("Start time and end time are required.");
+      setFormError(t("appointments.errorTimesRequired"));
       return;
     }
     if (form.endTime <= form.startTime) {
-      setFormError("End time must be after start time.");
+      setFormError(t("appointments.errorEndAfterStart"));
       return;
     }
 
@@ -280,7 +282,7 @@ export function AppointmentsPage() {
       await loadAppointments();
       await loadStats();
     } catch (error) {
-      setFormError(error instanceof ApiError ? error.message : "Unable to save appointment.");
+      setFormError(error instanceof ApiError ? error.message : t("appointments.errorUnableToSave"));
     } finally {
       setIsSaving(false);
     }
@@ -295,7 +297,7 @@ export function AppointmentsPage() {
     } catch (error) {
       setView({
         status: "error",
-        message: error instanceof ApiError ? error.message : "Unable to update appointment status.",
+        message: error instanceof ApiError ? error.message : t("appointments.errorUnableToUpdateStatus"),
       });
     }
   }
@@ -321,7 +323,7 @@ export function AppointmentsPage() {
     } catch (error) {
       setView({
         status: "error",
-        message: error instanceof ApiError ? error.message : "Unable to cancel appointment.",
+        message: error instanceof ApiError ? error.message : t("appointments.errorUnableToCancel"),
       });
     } finally {
       setIsCancelling(false);
@@ -334,7 +336,7 @@ export function AppointmentsPage() {
       navigate(`/visits/${response.data.id}`);
     } catch (error) {
       if (!(error instanceof ApiError) || error.status !== 404) {
-        setView({ status: "error", message: error instanceof ApiError ? error.message : "Unable to load visit." });
+        setView({ status: "error", message: error instanceof ApiError ? error.message : t("appointments.errorUnableToLoadVisit") });
         return;
       }
       try {
@@ -343,7 +345,7 @@ export function AppointmentsPage() {
       } catch (startError) {
         setView({
           status: "error",
-          message: startError instanceof ApiError ? startError.message : "Unable to start visit.",
+          message: startError instanceof ApiError ? startError.message : t("appointments.errorUnableToStartVisit"),
         });
       }
     }
@@ -367,18 +369,18 @@ export function AppointmentsPage() {
   return (
     <>
       <PageHeader
-        title="Appointments"
-        subtitle="Schedule and track patient appointments."
-        actions={canManageAppointments ? <Button onClick={openCreateModal}>Add Appointment</Button> : undefined}
+        title={t("appointments.title")}
+        subtitle={t("appointments.subtitle")}
+        actions={canManageAppointments ? <Button onClick={openCreateModal}>{t("appointments.addAppointment")}</Button> : undefined}
       />
 
       {stats && (
         <div className="appointments-stats">
-          <StatCard label="Total" value={stats.totalAppointments} />
-          <StatCard label="Today" value={stats.todayAppointments} />
-          <StatCard label="Scheduled" value={stats.scheduledAppointments} />
-          <StatCard label="Completed" value={stats.completedAppointments} />
-          <StatCard label="Cancelled / No-show" value={stats.cancelledOrNoShowAppointments} />
+          <StatCard label={t("appointments.statTotal")} value={stats.totalAppointments} />
+          <StatCard label={t("appointments.statToday")} value={stats.todayAppointments} />
+          <StatCard label={t("appointments.statScheduled")} value={stats.scheduledAppointments} />
+          <StatCard label={t("appointments.statCompleted")} value={stats.completedAppointments} />
+          <StatCard label={t("appointments.statCancelledNoShow")} value={stats.cancelledOrNoShowAppointments} />
         </div>
       )}
 
@@ -386,17 +388,17 @@ export function AppointmentsPage() {
         {patientIdFilter && (
           <div className="appointments-patient-filter-banner">
             <span>
-              Showing appointments for{" "}
-              <strong>{patients.find((p) => p.id === patientIdFilter)?.fullName ?? "selected patient"}</strong>
+              {t("appointments.showingFor")}{" "}
+              <strong>{patients.find((p) => p.id === patientIdFilter)?.fullName ?? t("appointments.selectedPatient")}</strong>
             </span>
             <Button variant="ghost" onClick={clearFilters}>
-              Clear
+              {t("common.clear")}
             </Button>
           </div>
         )}
         <div className="appointments-filters">
           <Input
-            placeholder="Search by patient, doctor, service..."
+            placeholder={t("appointments.searchPlaceholder")}
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
           />
@@ -415,10 +417,10 @@ export function AppointmentsPage() {
               setPageNumber(1);
             }}
           >
-            <option value="all">All statuses</option>
+            <option value="all">{t("appointments.allStatuses")}</option>
             {ALL_APPOINTMENT_STATUSES.map((status) => (
               <option key={status} value={status}>
-                {APPOINTMENT_STATUS_LABELS[status]}
+                {t(APPOINTMENT_STATUS_LABEL_KEYS[status])}
               </option>
             ))}
           </Select>
@@ -429,7 +431,7 @@ export function AppointmentsPage() {
               setPageNumber(1);
             }}
           >
-            <option value="all">All doctors</option>
+            <option value="all">{t("appointments.allDoctors")}</option>
             {doctors.map((doctor) => (
               <option key={doctor.id} value={doctor.id}>
                 {doctor.fullName}
@@ -444,23 +446,23 @@ export function AppointmentsPage() {
               setPageNumber(1);
             }}
           >
-            Today
+            {t("appointments.today")}
           </Button>
           <Button type="button" variant="ghost" onClick={clearFilters}>
-            Clear
+            {t("common.clear")}
           </Button>
         </div>
 
-        {view.status === "loading" && <LoadingState label="Loading appointments..." />}
+        {view.status === "loading" && <LoadingState label={t("appointments.loading")} />}
 
         {view.status === "error" && (
-          <EmptyState title="Unable to load appointments" description={view.message} />
+          <EmptyState title={t("appointments.unableToLoad")} description={view.message} />
         )}
 
         {view.status === "loaded" && appointments.length === 0 && (
           <EmptyState
-            title="No appointments found"
-            description="Try adjusting your search or filters, or schedule a new appointment."
+            title={t("appointments.noneFoundTitle")}
+            description={t("appointments.noneFoundDescription")}
           />
         )}
 
@@ -470,14 +472,14 @@ export function AppointmentsPage() {
               <table className="data-table">
                 <thead>
                   <tr>
-                    <th>Date</th>
-                    <th>Time</th>
-                    <th>Patient</th>
-                    <th>Phone</th>
-                    <th>Doctor</th>
-                    <th>Service</th>
-                    <th>Status</th>
-                    <th aria-label="Actions" />
+                    <th>{t("table.date")}</th>
+                    <th>{t("table.time")}</th>
+                    <th>{t("table.patient")}</th>
+                    <th>{t("table.phone")}</th>
+                    <th>{t("table.doctor")}</th>
+                    <th>{t("table.service")}</th>
+                    <th>{t("table.status")}</th>
+                    <th aria-label={t("common.actions")} />
                   </tr>
                 </thead>
                 <tbody>
@@ -493,44 +495,44 @@ export function AppointmentsPage() {
                       <td>{appointment.serviceName}</td>
                       <td>
                         <StatusBadge
-                          label={APPOINTMENT_STATUS_LABELS[appointment.status]}
+                          label={t(APPOINTMENT_STATUS_LABEL_KEYS[appointment.status])}
                           variant={APPOINTMENT_STATUS_VARIANTS[appointment.status]}
                         />
                       </td>
                       <td className="appointments-table-actions">
                         <Button variant="ghost" onClick={() => navigate(`/appointments/${appointment.id}`)}>
-                          View
+                          {t("common.view")}
                         </Button>
                         {canManageAppointments && (
                           <Button variant="ghost" onClick={() => openEditModalFor(appointment.id)}>
-                            Edit
+                            {t("common.edit")}
                           </Button>
                         )}
                         {allowedStatuses.length > 0 && (
                           <Select
-                            aria-label="Change status"
+                            aria-label={t("appointments.changeStatus")}
                             className="appointments-status-select"
                             value={appointment.status}
                             onChange={(e) => handleStatusChange(appointment, e.target.value as AppointmentStatus)}
                           >
-                            <option value={appointment.status}>{APPOINTMENT_STATUS_LABELS[appointment.status]}</option>
+                            <option value={appointment.status}>{t(APPOINTMENT_STATUS_LABEL_KEYS[appointment.status])}</option>
                             {allowedStatuses
                               .filter((status) => status !== appointment.status)
                               .map((status) => (
                                 <option key={status} value={status}>
-                                  {APPOINTMENT_STATUS_LABELS[status]}
+                                  {t(APPOINTMENT_STATUS_LABEL_KEYS[status])}
                                 </option>
                               ))}
                           </Select>
                         )}
                         {canManageAppointments && appointment.status !== "Cancelled" && (
                           <Button variant="danger" onClick={() => openCancelModal(appointment)}>
-                            Cancel
+                            {t("appointments.cancel")}
                           </Button>
                         )}
                         {canManageVisits && (appointment.status === "Arrived" || appointment.status === "InProgress") && (
                           <Button variant="ghost" onClick={() => handleOpenVisit(appointment.id)}>
-                            Visit
+                            {t("appointments.visit")}
                           </Button>
                         )}
                       </td>
@@ -539,7 +541,7 @@ export function AppointmentsPage() {
                 </tbody>
               </table>
             </div>
-            <p className="appointments-result-count">{totalCount} appointment(s) found</p>
+            <p className="appointments-result-count">{t("appointments.countFound", { count: totalCount })}</p>
             <Pagination pageNumber={pageNumber} totalPages={totalPages} onPageChange={setPageNumber} />
           </>
         )}
@@ -547,18 +549,18 @@ export function AppointmentsPage() {
 
       <Modal
         isOpen={isModalOpen}
-        title={editingAppointment ? "Edit Appointment" : "Add Appointment"}
+        title={editingAppointment ? t("appointments.editTitle") : t("appointments.addTitle")}
         onClose={closeModal}
       >
         <form className="modal-form" onSubmit={handleSubmit}>
           <Select
-            label="Patient"
+            label={t("appointments.patient")}
             required
             value={form.patientId}
             onChange={(e) => setForm({ ...form, patientId: e.target.value })}
           >
             <option value="" disabled>
-              Select patient
+              {t("appointments.selectPatient")}
             </option>
             {patients.map((patient) => (
               <option key={patient.id} value={patient.id}>
@@ -568,39 +570,39 @@ export function AppointmentsPage() {
           </Select>
 
           <Select
-            label="Doctor"
+            label={t("appointments.doctor")}
             required
             value={form.doctorProfileId}
             onChange={(e) => setForm({ ...form, doctorProfileId: e.target.value })}
           >
             <option value="" disabled>
-              Select doctor
+              {t("appointments.selectDoctor")}
             </option>
             {activeDoctors.map((doctor) => (
               <option key={doctor.id} value={doctor.id}>
-                {doctor.fullName} — {doctor.specialty}
+                {t("appointments.doctorOption", { name: doctor.fullName, specialty: doctor.specialty })}
               </option>
             ))}
           </Select>
 
           <Select
-            label="Service"
+            label={t("appointments.service")}
             required
             value={form.dentalServiceId}
             onChange={(e) => handleServiceChange(e.target.value)}
           >
             <option value="" disabled>
-              Select service
+              {t("appointments.selectService")}
             </option>
             {activeServices.map((service) => (
               <option key={service.id} value={service.id}>
-                {service.name} ({service.durationMinutes} min)
+                {t("appointments.serviceOption", { name: service.name, duration: service.durationMinutes })}
               </option>
             ))}
           </Select>
 
           <Input
-            label="Appointment date"
+            label={t("appointments.appointmentDate")}
             type="date"
             required
             min={todayIso()}
@@ -609,7 +611,7 @@ export function AppointmentsPage() {
           />
 
           <Input
-            label="Start time"
+            label={t("appointments.startTime")}
             type="time"
             required
             value={form.startTime}
@@ -617,7 +619,7 @@ export function AppointmentsPage() {
           />
 
           <Input
-            label="End time"
+            label={t("appointments.endTime")}
             type="time"
             required
             value={form.endTime}
@@ -625,13 +627,13 @@ export function AppointmentsPage() {
           />
 
           <Input
-            label="Reason"
+            label={t("appointments.reason")}
             value={form.reason}
             onChange={(e) => setForm({ ...form, reason: e.target.value })}
           />
 
           <Textarea
-            label="Notes"
+            label={t("appointments.notes")}
             value={form.notes}
             onChange={(e) => setForm({ ...form, notes: e.target.value })}
           />
@@ -640,10 +642,10 @@ export function AppointmentsPage() {
 
           <div className="modal-actions">
             <Button type="button" variant="secondary" onClick={closeModal} disabled={isSaving}>
-              Cancel
+              {t("common.cancel")}
             </Button>
             <Button type="submit" disabled={isSaving}>
-              {isSaving ? "Saving..." : "Save"}
+              {isSaving ? t("common.saving") : t("common.save")}
             </Button>
           </div>
         </form>
@@ -651,26 +653,29 @@ export function AppointmentsPage() {
 
       <Modal
         isOpen={cancellingAppointment !== null}
-        title="Cancel Appointment"
+        title={t("appointments.cancelTitle")}
         onClose={closeCancelModal}
       >
         {cancellingAppointment && (
           <div className="modal-form">
             <p>
-              Cancel the appointment for <strong>{cancellingAppointment.patientFullName}</strong> on{" "}
-              {formatDate(cancellingAppointment.appointmentDate)} at {cancellingAppointment.startTime}?
+              {t("appointments.cancelConfirm", {
+                patient: cancellingAppointment.patientFullName,
+                date: formatDate(cancellingAppointment.appointmentDate),
+                time: cancellingAppointment.startTime,
+              })}
             </p>
             <Textarea
-              label="Cancellation reason (optional)"
+              label={t("appointments.cancellationReason")}
               value={cancelReason}
               onChange={(e) => setCancelReason(e.target.value)}
             />
             <div className="modal-actions">
               <Button type="button" variant="secondary" onClick={closeCancelModal} disabled={isCancelling}>
-                Keep Appointment
+                {t("appointments.keepAppointment")}
               </Button>
               <Button type="button" variant="danger" onClick={handleConfirmCancel} disabled={isCancelling}>
-                {isCancelling ? "Cancelling..." : "Cancel Appointment"}
+                {isCancelling ? t("appointments.cancelling") : t("appointments.cancelAppointment")}
               </Button>
             </div>
           </div>

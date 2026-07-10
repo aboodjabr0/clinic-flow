@@ -11,9 +11,12 @@ import { Modal } from "../../components/common/Modal";
 import { Pagination } from "../../components/common/Pagination";
 import { auditLogsApi } from "../../api/auditLogsApi";
 import { ApiError } from "../../api/apiClient";
+import { useTranslation } from "../../i18n/useTranslation";
 import { AUDIT_ACTIONS, AUDIT_ENTITY_TYPES } from "../../types/auditLog";
 import type { AuditLog, AuditLogListItem } from "../../types/auditLog";
+import type { UserRole } from "../../types/auth";
 import { formatAuditAction, formatDateTime, formatEntityType, getAuditActionBadgeVariant } from "../../utils/auditLog";
+import { getRoleLabelKey } from "../../utils/role";
 import "./AuditLogsPage.css";
 
 type ViewState =
@@ -22,8 +25,10 @@ type ViewState =
   | { status: "loaded" };
 
 const PAGE_SIZE = 10;
+const KNOWN_ROLES: UserRole[] = ["Admin", "Doctor", "Receptionist"];
 
 export function AuditLogsPage() {
+  const { t } = useTranslation();
   const [logs, setLogs] = useState<AuditLogListItem[]>([]);
   const [view, setView] = useState<ViewState>({ status: "loading" });
 
@@ -40,6 +45,11 @@ export function AuditLogsPage() {
   const [selectedLog, setSelectedLog] = useState<AuditLog | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [detailsError, setDetailsError] = useState<string | null>(null);
+
+  function formatUserRole(role: string | null): string {
+    if (!role) return "—";
+    return KNOWN_ROLES.includes(role as UserRole) ? t(getRoleLabelKey(role as UserRole)) : role;
+  }
 
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -66,10 +76,10 @@ export function AuditLogsPage() {
       setTotalCount(response.data.totalCount);
       setView({ status: "loaded" });
     } catch (error) {
-      const message = error instanceof ApiError ? error.message : "Unable to reach the API.";
+      const message = error instanceof ApiError ? error.message : t("auditLogs.errorReachApi");
       setView({ status: "error", message });
     }
-  }, [search, actionFilter, entityTypeFilter, fromDate, toDate, pageNumber]);
+  }, [search, actionFilter, entityTypeFilter, fromDate, toDate, pageNumber, t]);
 
   useEffect(() => {
     loadLogs();
@@ -93,7 +103,7 @@ export function AuditLogsPage() {
       const response = await auditLogsApi.getAuditLogById(id);
       setSelectedLog(response.data);
     } catch (error) {
-      setDetailsError(error instanceof ApiError ? error.message : "Unable to load audit log details.");
+      setDetailsError(error instanceof ApiError ? error.message : t("auditLogs.errorLoadDetails"));
     }
   }
 
@@ -105,12 +115,12 @@ export function AuditLogsPage() {
 
   return (
     <>
-      <PageHeader title="Audit Logs" subtitle="Review sensitive clinic operations. Admin only." />
+      <PageHeader title={t("auditLogs.title")} subtitle={t("auditLogs.subtitle")} />
 
       <Card>
         <div className="audit-logs-filters">
           <Input
-            placeholder="Search by user, entity, summary..."
+            placeholder={t("auditLogs.searchPlaceholder")}
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
           />
@@ -121,10 +131,10 @@ export function AuditLogsPage() {
               setPageNumber(1);
             }}
           >
-            <option value="all">All actions</option>
+            <option value="all">{t("auditLogs.allActions")}</option>
             {AUDIT_ACTIONS.map((action) => (
               <option key={action} value={action}>
-                {formatAuditAction(action)}
+                {t(formatAuditAction(action))}
               </option>
             ))}
           </Select>
@@ -135,10 +145,10 @@ export function AuditLogsPage() {
               setPageNumber(1);
             }}
           >
-            <option value="all">All entity types</option>
+            <option value="all">{t("auditLogs.allEntityTypes")}</option>
             {AUDIT_ENTITY_TYPES.map((entityType) => (
               <option key={entityType} value={entityType}>
-                {formatEntityType(entityType)}
+                {t(formatEntityType(entityType))}
               </option>
             ))}
           </Select>
@@ -159,18 +169,18 @@ export function AuditLogsPage() {
             }}
           />
           <Button type="button" variant="ghost" onClick={clearFilters}>
-            Clear
+            {t("common.clear")}
           </Button>
         </div>
 
-        {view.status === "loading" && <LoadingState label="Loading audit logs..." />}
+        {view.status === "loading" && <LoadingState label={t("auditLogs.loading")} />}
 
-        {view.status === "error" && <EmptyState title="Unable to load audit logs" description={view.message} />}
+        {view.status === "error" && <EmptyState title={t("auditLogs.unableToLoad")} description={view.message} />}
 
         {view.status === "loaded" && logs.length === 0 && (
           <EmptyState
-            title="No audit log entries found"
-            description="Try adjusting your search or filters."
+            title={t("auditLogs.noneFoundTitle")}
+            description={t("auditLogs.noneFoundDescription")}
           />
         )}
 
@@ -180,15 +190,15 @@ export function AuditLogsPage() {
               <table className="data-table">
                 <thead>
                   <tr>
-                    <th>Timestamp</th>
-                    <th>User</th>
-                    <th>Role</th>
-                    <th>Action</th>
-                    <th>Entity Type</th>
-                    <th>Entity</th>
-                    <th>Summary</th>
-                    <th>IP Address</th>
-                    <th aria-label="Actions" />
+                    <th>{t("table.timestamp")}</th>
+                    <th>{t("table.user")}</th>
+                    <th>{t("table.role")}</th>
+                    <th>{t("table.action")}</th>
+                    <th>{t("table.entityType")}</th>
+                    <th>{t("table.entity")}</th>
+                    <th>{t("table.summary")}</th>
+                    <th>{t("table.ipAddress")}</th>
+                    <th aria-label={t("common.actions")} />
                   </tr>
                 </thead>
                 <tbody>
@@ -196,17 +206,17 @@ export function AuditLogsPage() {
                     <tr key={log.id}>
                       <td>{formatDateTime(log.createdAtUtc)}</td>
                       <td>{log.userFullName ?? log.userEmail ?? "—"}</td>
-                      <td>{log.userRole ?? "—"}</td>
+                      <td>{formatUserRole(log.userRole)}</td>
                       <td>
-                        <StatusBadge label={formatAuditAction(log.action)} variant={getAuditActionBadgeVariant(log.action)} />
+                        <StatusBadge label={t(formatAuditAction(log.action))} variant={getAuditActionBadgeVariant(log.action)} />
                       </td>
-                      <td>{formatEntityType(log.entityType)}</td>
+                      <td>{t(formatEntityType(log.entityType))}</td>
                       <td>{log.entityDisplayName ?? "—"}</td>
                       <td className="audit-logs-summary-cell">{log.summary}</td>
                       <td>{log.ipAddress ?? "—"}</td>
                       <td className="audit-logs-table-actions">
                         <Button variant="ghost" onClick={() => openDetails(log.id)}>
-                          Details
+                          {t("auditLogs.details")}
                         </Button>
                       </td>
                     </tr>
@@ -214,41 +224,41 @@ export function AuditLogsPage() {
                 </tbody>
               </table>
             </div>
-            <p className="audit-logs-result-count">{totalCount} entr{totalCount === 1 ? "y" : "ies"} found</p>
+            <p className="audit-logs-result-count">{t("auditLogs.countFound", { count: totalCount })}</p>
             <Pagination pageNumber={pageNumber} totalPages={totalPages} onPageChange={setPageNumber} />
           </>
         )}
       </Card>
 
-      <Modal isOpen={isModalOpen} title="Audit Log Details" onClose={closeModal}>
-        {!selectedLog && !detailsError && <LoadingState label="Loading details..." />}
-        {detailsError && <EmptyState title="Unable to load details" description={detailsError} />}
+      <Modal isOpen={isModalOpen} title={t("auditLogs.detailsTitle")} onClose={closeModal}>
+        {!selectedLog && !detailsError && <LoadingState label={t("auditLogs.loadingDetails")} />}
+        {detailsError && <EmptyState title={t("auditLogs.unableToLoadDetails")} description={detailsError} />}
         {selectedLog && (
           <dl className="audit-logs-details">
-            <dt>Timestamp</dt>
+            <dt>{t("table.timestamp")}</dt>
             <dd>{formatDateTime(selectedLog.createdAtUtc)}</dd>
-            <dt>User</dt>
+            <dt>{t("table.user")}</dt>
             <dd>{selectedLog.userFullName ?? "—"} {selectedLog.userEmail ? `(${selectedLog.userEmail})` : ""}</dd>
-            <dt>Role</dt>
-            <dd>{selectedLog.userRole ?? "—"}</dd>
-            <dt>Action</dt>
+            <dt>{t("table.role")}</dt>
+            <dd>{formatUserRole(selectedLog.userRole)}</dd>
+            <dt>{t("table.action")}</dt>
             <dd>
               <StatusBadge
-                label={formatAuditAction(selectedLog.action)}
+                label={t(formatAuditAction(selectedLog.action))}
                 variant={getAuditActionBadgeVariant(selectedLog.action)}
               />
             </dd>
-            <dt>Entity Type</dt>
-            <dd>{formatEntityType(selectedLog.entityType)}</dd>
-            <dt>Entity ID</dt>
+            <dt>{t("table.entityType")}</dt>
+            <dd>{t(formatEntityType(selectedLog.entityType))}</dd>
+            <dt>{t("auditLogs.entityId")}</dt>
             <dd>{selectedLog.entityId ?? "—"}</dd>
-            <dt>Entity</dt>
+            <dt>{t("table.entity")}</dt>
             <dd>{selectedLog.entityDisplayName ?? "—"}</dd>
-            <dt>Summary</dt>
+            <dt>{t("table.summary")}</dt>
             <dd>{selectedLog.summary}</dd>
-            <dt>IP Address</dt>
+            <dt>{t("table.ipAddress")}</dt>
             <dd>{selectedLog.ipAddress ?? "—"}</dd>
-            <dt>User Agent</dt>
+            <dt>{t("auditLogs.userAgent")}</dt>
             <dd>{selectedLog.userAgent ?? "—"}</dd>
           </dl>
         )}

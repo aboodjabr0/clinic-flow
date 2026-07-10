@@ -33,7 +33,7 @@ The project should be built phase by phase. Do not implement all features at onc
 - App name: ClinicFlow
 - Clinic type: Dental clinic
 - Doctors: Multiple doctors
-- Language: English only
+- Language: UI supports English and Arabic. Arabic uses a right-to-left (RTL) layout. New frontend features must use the i18n translation system (`frontend/src/i18n/`) — do not hardcode visible UI strings directly in pages/components.
 - Frontend: React + TypeScript
 - Backend: ASP.NET Core Web API
 - Database: PostgreSQL

@@ -8,6 +8,7 @@ import { invoicesApi } from "../../api/invoicesApi";
 import { patientsApi } from "../../api/patientsApi";
 import { dentalServicesApi } from "../../api/dentalServicesApi";
 import { ApiError } from "../../api/apiClient";
+import { useTranslation } from "../../i18n/useTranslation";
 import type { DentalService } from "../../types/dentalService";
 import type { Invoice } from "../../types/invoice";
 import type { PatientListItem } from "../../types/patient";
@@ -34,6 +35,7 @@ interface CreateInvoiceModalProps {
 }
 
 export function CreateInvoiceModal({ isOpen, onClose, onCreated, prefill }: CreateInvoiceModalProps) {
+  const { t } = useTranslation();
   const [patients, setPatients] = useState<PatientListItem[]>([]);
   const [services, setServices] = useState<DentalService[]>([]);
 
@@ -67,9 +69,10 @@ export function CreateInvoiceModal({ isOpen, onClose, onCreated, prefill }: Crea
           setServices(servicesResponse.data.filter((service) => service.isActive));
         })
         .catch(() => {
-          setFormError("Unable to load patients and services.");
+          setFormError(t("createInvoiceModal.errorReachApi"));
         });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, prefill]);
 
   function closeModal() {
@@ -84,23 +87,23 @@ export function CreateInvoiceModal({ isOpen, onClose, onCreated, prefill }: Crea
     const discountValue = discount.trim() === "" ? 0 : Number(discount);
 
     if (!prefill && !patientId) {
-      setFormError("Please select a patient.");
+      setFormError(t("createInvoiceModal.errorSelectPatient"));
       return;
     }
     if (subtotalValue !== undefined && (Number.isNaN(subtotalValue) || subtotalValue < 0)) {
-      setFormError("Subtotal must be zero or a positive amount.");
+      setFormError(t("createInvoiceModal.errorSubtotalPositive"));
       return;
     }
     if (subtotalValue === undefined && !prefill?.serviceName && !serviceId) {
-      setFormError("Enter a subtotal amount or select a service to use its default price.");
+      setFormError(t("createInvoiceModal.errorSubtotalOrService"));
       return;
     }
     if (Number.isNaN(discountValue) || discountValue < 0) {
-      setFormError("Discount cannot be negative.");
+      setFormError(t("createInvoiceModal.errorDiscountNegative"));
       return;
     }
     if (subtotalValue !== undefined && discountValue > subtotalValue) {
-      setFormError("Discount cannot exceed the subtotal amount.");
+      setFormError(t("createInvoiceModal.errorDiscountExceeds"));
       return;
     }
 
@@ -119,41 +122,45 @@ export function CreateInvoiceModal({ isOpen, onClose, onCreated, prefill }: Crea
       });
       onCreated(response.data);
     } catch (error) {
-      setFormError(error instanceof ApiError ? error.message : "Unable to create invoice.");
+      setFormError(error instanceof ApiError ? error.message : t("createInvoiceModal.errorUnableToCreate"));
     } finally {
       setIsSaving(false);
     }
   }
 
   return (
-    <Modal isOpen={isOpen} title="Create Invoice" onClose={closeModal}>
+    <Modal isOpen={isOpen} title={t("createInvoiceModal.title")} onClose={closeModal}>
       <form className="modal-form" onSubmit={handleSubmit}>
         {prefill ? (
           <div className="invoice-form-prefill">
-            <span className="invoice-form-prefill-label">Patient</span>
+            <span className="invoice-form-prefill-label">{t("createInvoiceModal.patient")}</span>
             <span className="invoice-form-prefill-value">{prefill.patientName}</span>
             {prefill.serviceName && (
               <>
-                <span className="invoice-form-prefill-label">Service</span>
+                <span className="invoice-form-prefill-label">{t("createInvoiceModal.service")}</span>
                 <span className="invoice-form-prefill-value">{prefill.serviceName}</span>
               </>
             )}
           </div>
         ) : (
           <>
-            <Select label="Patient" value={patientId} onChange={(e) => setPatientId(e.target.value)}>
-              <option value="">Select a patient...</option>
+            <Select label={t("createInvoiceModal.patient")} value={patientId} onChange={(e) => setPatientId(e.target.value)}>
+              <option value="">{t("createInvoiceModal.selectPatient")}</option>
               {patients.map((patient) => (
                 <option key={patient.id} value={patient.id}>
-                  {patient.fullName} ({patient.phoneNumber})
+                  {t("createInvoiceModal.patientOption", { name: patient.fullName, phone: patient.phoneNumber })}
                 </option>
               ))}
             </Select>
-            <Select label="Service (optional)" value={serviceId} onChange={(e) => setServiceId(e.target.value)}>
-              <option value="">No linked service</option>
+            <Select
+              label={t("createInvoiceModal.serviceOptional")}
+              value={serviceId}
+              onChange={(e) => setServiceId(e.target.value)}
+            >
+              <option value="">{t("createInvoiceModal.noLinkedService")}</option>
               {services.map((service) => (
                 <option key={service.id} value={service.id}>
-                  {service.name} ({service.defaultPrice.toFixed(2)})
+                  {t("createInvoiceModal.serviceOption", { name: service.name, price: service.defaultPrice.toFixed(2) })}
                 </option>
               ))}
             </Select>
@@ -161,33 +168,42 @@ export function CreateInvoiceModal({ isOpen, onClose, onCreated, prefill }: Crea
         )}
 
         <Input
-          label="Subtotal amount"
+          label={t("createInvoiceModal.subtotalAmount")}
           type="number"
           min="0"
           step="0.01"
-          placeholder="Leave empty to use the service's default price"
+          placeholder={t("createInvoiceModal.subtotalPlaceholder")}
           value={subtotal}
           onChange={(e) => setSubtotal(e.target.value)}
         />
         <Input
-          label="Discount amount"
+          label={t("createInvoiceModal.discountAmount")}
           type="number"
           min="0"
           step="0.01"
           value={discount}
           onChange={(e) => setDiscount(e.target.value)}
         />
-        <Input label="Due date (optional)" type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
-        <Textarea label="Notes (optional)" value={notes} onChange={(e) => setNotes(e.target.value)} />
+        <Input
+          label={t("createInvoiceModal.dueDateOptional")}
+          type="date"
+          value={dueDate}
+          onChange={(e) => setDueDate(e.target.value)}
+        />
+        <Textarea
+          label={t("createInvoiceModal.notesOptional")}
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+        />
 
         {formError && <p className="invoice-form-error">{formError}</p>}
 
         <div className="modal-actions">
           <Button type="button" variant="secondary" onClick={closeModal} disabled={isSaving}>
-            Cancel
+            {t("common.cancel")}
           </Button>
           <Button type="submit" disabled={isSaving}>
-            {isSaving ? "Creating..." : "Create Invoice"}
+            {isSaving ? t("createInvoiceModal.creating") : t("createInvoiceModal.title")}
           </Button>
         </div>
       </form>

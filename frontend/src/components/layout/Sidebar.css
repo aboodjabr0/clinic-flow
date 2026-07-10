@@ -2,7 +2,7 @@
   width: var(--sidebar-width);
   flex-shrink: 0;
   background-color: var(--color-sidebar-bg);
-  border-right: 1px solid var(--color-border);
+  border-inline-end: 1px solid var(--color-border);
   display: flex;
   flex-direction: column;
   padding: var(--space-4);
@@ -63,14 +63,20 @@
 @media (max-width: 900px) {
   .sidebar {
     position: fixed;
-    inset: 0 auto 0 0;
+    inset-block: 0;
+    inset-inline-start: 0;
     z-index: 40;
     transform: translateX(-100%);
     transition: transform var(--transition-fast);
     box-shadow: var(--shadow-md);
   }
 
-  .sidebar-open {
+  html[dir="rtl"] .sidebar {
+    transform: translateX(100%);
+  }
+
+  .sidebar-open,
+  html[dir="rtl"] .sidebar-open {
     transform: translateX(0);
   }
 }

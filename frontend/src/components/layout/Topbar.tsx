@@ -1,5 +1,7 @@
 import { useAuth } from "../../context/AuthContext";
 import { useTheme } from "../../context/ThemeContext";
+import { useTranslation } from "../../i18n/useTranslation";
+import { getRoleLabelKey } from "../../utils/role";
 import { Button } from "../common/Button";
 import "./Topbar.css";
 
@@ -15,8 +17,9 @@ function getInitials(fullName: string) {
 
 function ThemeToggle() {
   const { theme, toggleTheme } = useTheme();
+  const { t } = useTranslation();
   const isDark = theme === "dark";
-  const nextLabel = isDark ? "Switch to light mode" : "Switch to dark mode";
+  const nextLabel = isDark ? t("topbar.switchToLight") : t("topbar.switchToDark");
 
   return (
     <button
@@ -41,13 +44,32 @@ function ThemeToggle() {
           />
         </svg>
       )}
-      <span className="topbar-theme-toggle-label">{isDark ? "Light" : "Dark"}</span>
+      <span className="topbar-theme-toggle-label">{isDark ? t("topbar.dark") : t("topbar.light")}</span>
+    </button>
+  );
+}
+
+function LanguageToggle() {
+  const { language, setLanguage } = useTranslation();
+
+  return (
+    <button
+      type="button"
+      className="topbar-language-toggle"
+      onClick={() => setLanguage(language === "en" ? "ar" : "en")}
+      title="Language / اللغة"
+      aria-label="Toggle language"
+    >
+      <span className={language === "en" ? "topbar-language-active" : ""}>EN</span>
+      <span className="topbar-language-divider">/</span>
+      <span className={language === "ar" ? "topbar-language-active" : ""}>عربي</span>
     </button>
   );
 }
 
 export function Topbar({ onMenuClick }: TopbarProps) {
   const { user, logout } = useAuth();
+  const { t } = useTranslation();
 
   return (
     <header className="topbar">
@@ -55,7 +77,7 @@ export function Topbar({ onMenuClick }: TopbarProps) {
         type="button"
         className="topbar-menu-btn"
         onClick={onMenuClick}
-        aria-label="Toggle navigation menu"
+        aria-label={t("topbar.toggleMenu")}
       >
         <span />
         <span />
@@ -64,6 +86,7 @@ export function Topbar({ onMenuClick }: TopbarProps) {
 
       <div className="topbar-spacer" />
 
+      <LanguageToggle />
       <ThemeToggle />
 
       {user && (
@@ -71,10 +94,10 @@ export function Topbar({ onMenuClick }: TopbarProps) {
           <div className="topbar-user-avatar">{getInitials(user.fullName)}</div>
           <div className="topbar-user-info">
             <span className="topbar-user-name">{user.fullName}</span>
-            <span className="topbar-user-role">{user.role}</span>
+            <span className="topbar-user-role">{t(getRoleLabelKey(user.role))}</span>
           </div>
           <Button variant="ghost" onClick={logout}>
-            Logout
+            {t("topbar.logout")}
           </Button>
         </div>
       )}

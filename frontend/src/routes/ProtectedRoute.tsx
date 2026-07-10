@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { LoadingState } from "../components/common/LoadingState";
+import { useTranslation } from "../i18n/useTranslation";
 import type { UserRole } from "../types/auth";
 
 interface ProtectedRouteProps {
@@ -12,9 +13,10 @@ interface ProtectedRouteProps {
 export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
   const { isAuthenticated, isLoading, hasAnyRole } = useAuth();
   const location = useLocation();
+  const { t } = useTranslation();
 
   if (isLoading) {
-    return <LoadingState label="Checking your session..." />;
+    return <LoadingState label={t("protectedRoute.checkingSession")} />;
   }
 
   if (!isAuthenticated) {

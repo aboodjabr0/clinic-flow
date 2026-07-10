@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { useTranslation } from "../../i18n/useTranslation";
 import "./Modal.css";
 
 interface ModalProps {
@@ -9,6 +10,8 @@ interface ModalProps {
 }
 
 export function Modal({ isOpen, title, onClose, children }: ModalProps) {
+  const { t } = useTranslation();
+
   if (!isOpen) {
     return null;
   }
@@ -24,7 +27,7 @@ export function Modal({ isOpen, title, onClose, children }: ModalProps) {
       >
         <div className="modal-header">
           <h2 className="modal-title">{title}</h2>
-          <button type="button" className="modal-close" onClick={onClose} aria-label="Close">
+          <button type="button" className="modal-close" onClick={onClose} aria-label={t("modal.close")}>
             &times;
           </button>
         </div>

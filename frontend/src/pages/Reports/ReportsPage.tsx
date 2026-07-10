@@ -12,13 +12,15 @@ import { reportsApi } from "../../api/reportsApi";
 import { doctorsApi } from "../../api/doctorsApi";
 import { ApiError } from "../../api/apiClient";
 import { useAuth } from "../../context/AuthContext";
-import { formatDate, GENDER_LABELS } from "../../utils/patient";
+import { useTranslation } from "../../i18n/useTranslation";
+import type { TranslationKey } from "../../i18n/translations";
+import { formatDate, GENDER_LABEL_KEYS } from "../../utils/patient";
 import {
   ALL_APPOINTMENT_STATUSES,
-  APPOINTMENT_STATUS_LABELS,
+  APPOINTMENT_STATUS_LABEL_KEYS,
   APPOINTMENT_STATUS_VARIANTS,
 } from "../../utils/appointment";
-import { formatMoney, PAYMENT_STATUS_LABELS, PAYMENT_STATUS_VARIANTS } from "../../utils/invoice";
+import { formatMoney, PAYMENT_STATUS_LABEL_KEYS, PAYMENT_STATUS_VARIANTS } from "../../utils/invoice";
 import type { AppointmentStatus } from "../../types/appointment";
 import type { Doctor } from "../../types/doctor";
 import type { AppointmentReport, PatientReport, RevenueReport } from "../../types/reports";
@@ -33,16 +35,17 @@ type ReportState<T> =
 
 export function ReportsPage() {
   const { user, hasAnyRole } = useAuth();
+  const { t } = useTranslation();
   const canViewFinancials = hasAnyRole(["Admin", "Receptionist"]);
   const isDoctor = user?.role === "Doctor";
 
-  const tabs: { key: ReportTab; label: string }[] = canViewFinancials
+  const tabs: { key: ReportTab; labelKey: TranslationKey }[] = canViewFinancials
     ? [
-        { key: "appointments", label: "Appointments" },
-        { key: "patients", label: "Patients" },
-        { key: "revenue", label: "Revenue" },
+        { key: "appointments", labelKey: "reports.tabAppointments" },
+        { key: "patients", labelKey: "reports.tabPatients" },
+        { key: "revenue", labelKey: "reports.tabRevenue" },
       ]
-    : [{ key: "appointments", label: "Appointments" }];
+    : [{ key: "appointments", labelKey: "reports.tabAppointments" }];
 
   const [activeTab, setActiveTab] = useState<ReportTab>("appointments");
   const [fromDate, setFromDate] = useState("");
@@ -77,10 +80,10 @@ export function ReportsPage() {
       });
       setAppointmentReport({ status: "loaded", data: response.data });
     } catch (error) {
-      const message = error instanceof ApiError ? error.message : "Unable to reach the API.";
+      const message = error instanceof ApiError ? error.message : t("reports.errorReachApi");
       setAppointmentReport({ status: "error", message });
     }
-  }, [fromDate, toDate, doctorFilter, statusFilter]);
+  }, [fromDate, toDate, doctorFilter, statusFilter, t]);
 
   const loadPatientReport = useCallback(async () => {
     setPatientReport({ status: "loading" });
@@ -92,10 +95,10 @@ export function ReportsPage() {
       });
       setPatientReport({ status: "loaded", data: response.data });
     } catch (error) {
-      const message = error instanceof ApiError ? error.message : "Unable to reach the API.";
+      const message = error instanceof ApiError ? error.message : t("reports.errorReachApi");
       setPatientReport({ status: "error", message });
     }
-  }, [fromDate, toDate, activeFilter]);
+  }, [fromDate, toDate, activeFilter, t]);
 
   const loadRevenueReport = useCallback(async () => {
     setRevenueReport({ status: "loading" });
@@ -106,10 +109,10 @@ export function ReportsPage() {
       });
       setRevenueReport({ status: "loaded", data: response.data });
     } catch (error) {
-      const message = error instanceof ApiError ? error.message : "Unable to reach the API.";
+      const message = error instanceof ApiError ? error.message : t("reports.errorReachApi");
       setRevenueReport({ status: "error", message });
     }
-  }, [fromDate, toDate]);
+  }, [fromDate, toDate, t]);
 
   useEffect(() => {
     if (activeTab === "appointments") loadAppointmentReport();
@@ -134,7 +137,7 @@ export function ReportsPage() {
   function renderRange(range: { fromDate: string; toDate: string }) {
     return (
       <p className="reports-range">
-        Showing {formatDate(range.fromDate)} to {formatDate(range.toDate)}
+        {t("reports.showingRange", { fromDate: formatDate(range.fromDate), toDate: formatDate(range.toDate) })}
       </p>
     );
   }
@@ -142,11 +145,11 @@ export function ReportsPage() {
   return (
     <>
       <PageHeader
-        title="Reports"
-        subtitle={isDoctor ? "Your appointment report." : "Operational and financial summaries."}
+        title={t("reports.title")}
+        subtitle={isDoctor ? t("reports.subtitleAppointments") : t("reports.subtitleGeneric")}
         actions={
           <Button variant="secondary" onClick={() => window.print()}>
-            Print
+            {t("reports.print")}
           </Button>
         }
       />
@@ -161,18 +164,18 @@ export function ReportsPage() {
                 className={`reports-tab ${activeTab === tab.key ? "reports-tab-active" : ""}`}
                 onClick={() => setActiveTab(tab.key)}
               >
-                {tab.label}
+                {t(tab.labelKey)}
               </button>
             ))}
           </div>
         )}
 
         <div className="reports-filters">
-          <Input label="From" type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} />
-          <Input label="To" type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} />
+          <Input label={t("reports.from")} type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} />
+          <Input label={t("reports.to")} type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} />
           {activeTab === "appointments" && !isDoctor && (
-            <Select label="Doctor" value={doctorFilter} onChange={(e) => setDoctorFilter(e.target.value)}>
-              <option value="all">All doctors</option>
+            <Select label={t("reports.doctor")} value={doctorFilter} onChange={(e) => setDoctorFilter(e.target.value)}>
+              <option value="all">{t("reports.allDoctors")}</option>
               {doctors.map((doctor) => (
                 <option key={doctor.id} value={doctor.id}>
                   {doctor.fullName}
@@ -182,63 +185,63 @@ export function ReportsPage() {
           )}
           {activeTab === "appointments" && (
             <Select
-              label="Status"
+              label={t("reports.status")}
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value as "all" | AppointmentStatus)}
             >
-              <option value="all">All statuses</option>
+              <option value="all">{t("reports.allStatuses")}</option>
               {ALL_APPOINTMENT_STATUSES.map((status) => (
                 <option key={status} value={status}>
-                  {APPOINTMENT_STATUS_LABELS[status]}
+                  {t(APPOINTMENT_STATUS_LABEL_KEYS[status])}
                 </option>
               ))}
             </Select>
           )}
           {activeTab === "patients" && (
             <Select
-              label="Active"
+              label={t("reports.patientStatus")}
               value={activeFilter}
               onChange={(e) => setActiveFilter(e.target.value as "all" | "active" | "inactive")}
             >
-              <option value="all">All patients</option>
-              <option value="active">Active only</option>
-              <option value="inactive">Inactive only</option>
+              <option value="all">{t("reports.allPatients")}</option>
+              <option value="active">{t("reports.activeOnly")}</option>
+              <option value="inactive">{t("reports.inactiveOnly")}</option>
             </Select>
           )}
           <div className="reports-filters-actions">
             <Button type="button" variant="ghost" onClick={clearFilters}>
-              Clear
+              {t("reports.clear")}
             </Button>
           </div>
         </div>
 
         {activeTab === "appointments" && (
           <>
-            {appointmentReport.status === "loading" && <LoadingState label="Loading appointment report..." />}
+            {appointmentReport.status === "loading" && <LoadingState label={t("reports.loadingAppointmentReport")} />}
             {appointmentReport.status === "error" && (
-              <EmptyState title="Unable to load report" description={appointmentReport.message} />
+              <EmptyState title={t("reports.unableToLoad")} description={appointmentReport.message} />
             )}
             {appointmentReport.status === "loaded" && (
               <>
                 {renderRange(appointmentReport.data)}
                 <div className="reports-summary">
-                  <StatCard label="Appointments" value={appointmentReport.data.totalCount} />
-                  <StatCard label="Completed" value={appointmentReport.data.completedCount} />
-                  <StatCard label="Cancelled / No Show" value={appointmentReport.data.cancelledOrNoShowCount} />
+                  <StatCard label={t("reports.statAppointments")} value={appointmentReport.data.totalCount} />
+                  <StatCard label={t("reports.statCompleted")} value={appointmentReport.data.completedCount} />
+                  <StatCard label={t("reports.statCancelledNoShow")} value={appointmentReport.data.cancelledOrNoShowCount} />
                 </div>
                 {appointmentReport.data.rows.length === 0 ? (
-                  <EmptyState title="No appointments in this range" />
+                  <EmptyState title={t("reports.noAppointmentsInRange")} />
                 ) : (
                   <div className="data-table-wrapper">
                     <table className="data-table">
                       <thead>
                         <tr>
-                          <th>Date</th>
-                          <th>Time</th>
-                          <th>Patient</th>
-                          <th>Doctor</th>
-                          <th>Service</th>
-                          <th>Status</th>
+                          <th>{t("table.date")}</th>
+                          <th>{t("table.time")}</th>
+                          <th>{t("table.patient")}</th>
+                          <th>{t("table.doctor")}</th>
+                          <th>{t("table.service")}</th>
+                          <th>{t("table.status")}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -253,7 +256,7 @@ export function ReportsPage() {
                             <td>{row.serviceName}</td>
                             <td>
                               <StatusBadge
-                                label={APPOINTMENT_STATUS_LABELS[row.status]}
+                                label={t(APPOINTMENT_STATUS_LABEL_KEYS[row.status])}
                                 variant={APPOINTMENT_STATUS_VARIANTS[row.status]}
                               />
                             </td>
@@ -270,29 +273,29 @@ export function ReportsPage() {
 
         {activeTab === "patients" && canViewFinancials && (
           <>
-            {patientReport.status === "loading" && <LoadingState label="Loading patient report..." />}
+            {patientReport.status === "loading" && <LoadingState label={t("reports.loadingPatientReport")} />}
             {patientReport.status === "error" && (
-              <EmptyState title="Unable to load report" description={patientReport.message} />
+              <EmptyState title={t("reports.unableToLoad")} description={patientReport.message} />
             )}
             {patientReport.status === "loaded" && (
               <>
                 {renderRange(patientReport.data)}
                 <div className="reports-summary">
-                  <StatCard label="Patients Registered" value={patientReport.data.totalCount} />
-                  <StatCard label="Active" value={patientReport.data.activeCount} />
+                  <StatCard label={t("reports.statPatientsRegistered")} value={patientReport.data.totalCount} />
+                  <StatCard label={t("reports.statActive")} value={patientReport.data.activeCount} />
                 </div>
                 {patientReport.data.rows.length === 0 ? (
-                  <EmptyState title="No patients registered in this range" />
+                  <EmptyState title={t("reports.noPatientsInRange")} />
                 ) : (
                   <div className="data-table-wrapper">
                     <table className="data-table">
                       <thead>
                         <tr>
-                          <th>Registered</th>
-                          <th>Patient</th>
-                          <th>Phone</th>
-                          <th>Gender</th>
-                          <th>Status</th>
+                          <th>{t("table.registered")}</th>
+                          <th>{t("table.patient")}</th>
+                          <th>{t("table.phone")}</th>
+                          <th>{t("table.gender")}</th>
+                          <th>{t("table.status")}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -301,10 +304,10 @@ export function ReportsPage() {
                             <td>{formatDate(row.registeredDate)}</td>
                             <td>{row.fullName}</td>
                             <td>{row.phoneNumber}</td>
-                            <td>{GENDER_LABELS[row.gender]}</td>
+                            <td>{t(GENDER_LABEL_KEYS[row.gender])}</td>
                             <td>
                               <StatusBadge
-                                label={row.isActive ? "Active" : "Inactive"}
+                                label={row.isActive ? t("common.active") : t("common.inactive")}
                                 variant={row.isActive ? "success" : "neutral"}
                               />
                             </td>
@@ -321,34 +324,34 @@ export function ReportsPage() {
 
         {activeTab === "revenue" && canViewFinancials && (
           <>
-            {revenueReport.status === "loading" && <LoadingState label="Loading revenue report..." />}
+            {revenueReport.status === "loading" && <LoadingState label={t("reports.loadingRevenueReport")} />}
             {revenueReport.status === "error" && (
-              <EmptyState title="Unable to load report" description={revenueReport.message} />
+              <EmptyState title={t("reports.unableToLoad")} description={revenueReport.message} />
             )}
             {revenueReport.status === "loaded" && (
               <>
                 {renderRange(revenueReport.data)}
                 <div className="reports-summary">
-                  <StatCard label="Invoices" value={revenueReport.data.invoiceCount} />
-                  <StatCard label="Invoiced" value={formatMoney(revenueReport.data.totalInvoiced)} />
-                  <StatCard label="Collected" value={formatMoney(revenueReport.data.totalPaid)} />
-                  <StatCard label="Outstanding" value={formatMoney(revenueReport.data.totalOutstanding)} />
+                  <StatCard label={t("reports.statInvoices")} value={revenueReport.data.invoiceCount} />
+                  <StatCard label={t("reports.statInvoiced")} value={formatMoney(revenueReport.data.totalInvoiced)} />
+                  <StatCard label={t("reports.statCollected")} value={formatMoney(revenueReport.data.totalPaid)} />
+                  <StatCard label={t("reports.statOutstanding")} value={formatMoney(revenueReport.data.totalOutstanding)} />
                 </div>
                 {revenueReport.data.rows.length === 0 ? (
-                  <EmptyState title="No invoices in this range" />
+                  <EmptyState title={t("reports.noInvoicesInRange")} />
                 ) : (
                   <div className="data-table-wrapper">
                     <table className="data-table">
                       <thead>
                         <tr>
-                          <th>Invoice</th>
-                          <th>Issued</th>
-                          <th>Patient</th>
-                          <th>Service</th>
-                          <th>Total</th>
-                          <th>Paid</th>
-                          <th>Remaining</th>
-                          <th>Status</th>
+                          <th>{t("table.invoice")}</th>
+                          <th>{t("table.issued")}</th>
+                          <th>{t("table.patient")}</th>
+                          <th>{t("table.service")}</th>
+                          <th>{t("table.total")}</th>
+                          <th>{t("table.paid")}</th>
+                          <th>{t("table.remaining")}</th>
+                          <th>{t("table.status")}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -363,7 +366,7 @@ export function ReportsPage() {
                             <td>{formatMoney(row.remainingAmount)}</td>
                             <td>
                               <StatusBadge
-                                label={PAYMENT_STATUS_LABELS[row.status]}
+                                label={t(PAYMENT_STATUS_LABEL_KEYS[row.status])}
                                 variant={PAYMENT_STATUS_VARIANTS[row.status]}
                               />
                             </td>
