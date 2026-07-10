@@ -34,4 +34,5 @@ public static class AuditEntityTypes
     public const string Invoice = "Invoice";
     public const string Payment = "Payment";
     public const string Auth = "Auth";
+    public const string User = "User";
 }

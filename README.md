@@ -28,6 +28,7 @@ ClinicFlow is a clinic *operations* system. It deliberately provides **no diagno
 - **Dashboard** — headline stats, today's schedule, status breakdown, recent activity, upcoming follow-ups, revenue charts (financials hidden from Doctors).
 - **Reports** — appointment, revenue, and patient reports over date ranges.
 - **Audit logs** — Admin-only trail of logins and all significant actions, with no clinical text, passwords, or tokens recorded.
+- **User management** — Admin-only staff account management: create/edit staff, activate/deactivate, reset passwords, optionally link Doctor accounts to a doctor profile.
 - **Clinic settings** — clinic name, contact info, opening hours, default currency.
 - **Responsive UI** with light/dark theme.
 
@@ -44,15 +45,15 @@ ClinicFlow is a clinic *operations* system. It deliberately provides **no diagno
 
 | Role | Summary |
 |---|---|
-| **Admin** | Everything: manage doctors, services, settings; view audit logs; full patient/appointment/visit/invoice access. |
+| **Admin** | Everything: manage doctors, services, settings, staff user accounts; view audit logs; full patient/appointment/visit/invoice access. |
 | **Receptionist** | Front desk: patients, appointment booking/cancellation, invoices & payments, reports. View-only on doctors/services/visits. |
 | **Doctor** | Clinical: view patients/appointments, start/update/complete **their own** visits, write notes & prescriptions. View-only on invoices; no financial data, revenue, or audit logs. |
 
-There is no in-app user management yet — login accounts are created by database seeding (see [Known Limitations](#known-limitations)).
+Admins create and manage staff login accounts from the in-app **User Management** page (`/users`) — see [docs/api/users.md](docs/api/users.md). The seeded demo accounts below remain available for local development.
 
 ## Screens / Modules
 
-Login, Dashboard, Patients (list + details), Appointments, Doctors, Services, Visits, Invoices, Reports, Settings (Admin), Audit Logs (Admin), Access Denied.
+Login, Dashboard, Patients (list + details), Appointments, Doctors, Services, Visits, Invoices, Reports, Settings (Admin), Audit Logs (Admin), User Management (Admin), Access Denied.
 
 ## Local Setup
 
@@ -190,7 +191,7 @@ The demo deployment targets: **backend on Render** (Docker, see `backend/Dockerf
 
 ## Known Limitations
 
-- **No user management UI/API** — accounts exist only via seeding; there is no endpoint to create users, change passwords, or reset passwords.
+- **No self-service "forgot password"** — password resets are Admin-assisted only (`POST /api/users/{id}/reset-password`), and there is no "force password change on next login" flag yet.
 - **No login rate limiting** — flagged as a TODO in `AuthController`; add throttling before real production use.
 - **No refresh tokens / server-side logout** — tokens simply expire (default 60 minutes).
 - **No frontend test suite** — backend integration tests exist (see [docs/TESTING.md](docs/TESTING.md) §0), but the frontend is still tested manually.
@@ -207,7 +208,7 @@ _Placeholder — add screenshots of the Dashboard, Patients, Appointments, Visit
 
 ## Future Improvements
 
-- In-app user management (create staff accounts, password reset) and login rate limiting.
+- Self-service "forgot password" flow and a "must change password on next login" flag; login rate limiting.
 - Refresh tokens or sliding sessions.
 - Frontend test suite (the backend xUnit integration suite exists; frontend tests are still future work).
 - Payment corrections/refund workflow.

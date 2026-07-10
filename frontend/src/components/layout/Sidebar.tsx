@@ -14,6 +14,7 @@ const NAV_ITEMS: { to: string; label: string; roles?: UserRole[] }[] = [
   { to: "/reports", label: "Reports" },
   { to: "/settings", label: "Settings", roles: ["Admin"] },
   { to: "/audit-logs", label: "Audit Logs", roles: ["Admin"] },
+  { to: "/users", label: "User Management", roles: ["Admin"] },
 ];
 
 interface SidebarProps {

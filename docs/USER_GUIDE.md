@@ -18,6 +18,7 @@ Signing in: open the app, enter your email and password. Sessions last 60 minute
 | Reports | all three | all three | appointments only (own) |
 | Settings | edit | — | — |
 | Audit Logs | view | — | — |
+| Users | manage | — | — |
 
 ---
 
@@ -27,7 +28,16 @@ The Admin sees and manages everything.
 
 **Dashboard** — clinic-wide headline stats (patients, today's appointments, visits, unpaid invoices), today's schedule, appointment status breakdown, recent activity, upcoming follow-ups, and revenue cards with a 6-month revenue chart.
 
-**Users & accounts (current limitation)** — there is **no user management screen yet**. Staff login accounts (Admin, Doctor, Receptionist) are created by database seeding, and passwords can only be changed via seeding configuration. Managing *doctor profiles* (below) does not create logins.
+**Managing Staff Users** — the User Management page (`/users`) is where Admins create and maintain staff login accounts (Admin, Doctor, Receptionist):
+
+- **Create a user** — full name, email, password, and role. If the role is Doctor, you can optionally link an existing doctor profile right away (or leave it unlinked and link it later) — this is what scopes that doctor's visits and dashboard to their own appointments.
+- **Edit a user** — update name, email, role, or their linked doctor profile.
+- **Activate/Deactivate** — deactivated accounts cannot log in. The clinic can never be left with zero active Admins — the app blocks any change that would remove the last one, including an Admin deactivating themselves.
+- **Reset password** — set a new password for a staff member (e.g. after they forget theirs); the old password stops working immediately.
+
+Every create, edit, activate/deactivate, and password reset is recorded in the Audit Logs — passwords themselves are never shown or logged anywhere.
+
+**Demo accounts** — the seeded demo logins (`admin@clinicflow.local`, etc.) exist for local development and demos only. Real clinics should create their own staff accounts through this page and disable demo seeding in production by setting `ENABLE_DEMO_SEEDING=false`.
 
 **Doctors** — add and edit doctor profiles (name, email, phone, specialty, license, bio), link a profile to an existing Doctor login account (this link is what scopes that doctor's visits and dashboard), and activate/deactivate doctors.
 

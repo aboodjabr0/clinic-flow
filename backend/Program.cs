@@ -95,6 +95,7 @@ builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 builder.Services.AddScoped<IAuditLogService, AuditLogService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IDoctorService, DoctorService>();
+builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IDentalServiceCatalogService, DentalServiceCatalogService>();
 builder.Services.AddScoped<IClinicSettingsService, ClinicSettingsService>();
 builder.Services.AddScoped<IPatientService, PatientService>();

@@ -59,6 +59,7 @@ Error status codes:
 Notes/business rules:
 - Inactive (`isActive = false`) accounts cannot log in.
 - No login rate limiting exists yet (tracked as a TODO in `AuthController`); add throttling before real production use.
+- Login accounts are no longer seed-only: Admins create and manage real staff accounts via [users.md](users.md) (`POST /api/users`, etc.). Seeded demo accounts still work for local development.
 
 ## GET /api/auth/me
 

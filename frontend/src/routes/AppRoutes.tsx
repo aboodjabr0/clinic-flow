@@ -15,6 +15,7 @@ import { InvoiceDetailsPage } from "../pages/Invoices/InvoiceDetailsPage";
 import { ReportsPage } from "../pages/Reports/ReportsPage";
 import { SettingsPage } from "../pages/Settings/SettingsPage";
 import { AuditLogsPage } from "../pages/AuditLogs/AuditLogsPage";
+import { UsersPage } from "../pages/Users/UsersPage";
 import { AccessDeniedPage } from "../pages/AccessDenied/AccessDeniedPage";
 import { ProtectedRoute } from "./ProtectedRoute";
 
@@ -56,6 +57,14 @@ export function AppRoutes() {
           element={
             <ProtectedRoute allowedRoles={["Admin"]}>
               <AuditLogsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/users"
+          element={
+            <ProtectedRoute allowedRoles={["Admin"]}>
+              <UsersPage />
             </ProtectedRoute>
           }
         />
