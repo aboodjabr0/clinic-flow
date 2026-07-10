@@ -207,3 +207,9 @@ static string ResolveConnectionString(IConfiguration configuration)
         ?? throw new InvalidOperationException(
             "No database connection configured. Set DB_HOST/DB_NAME/DB_USER/DB_PASSWORD environment variables, or ConnectionStrings:Default in appsettings.");
 }
+
+/// <summary>
+/// Makes the implicit Program class visible to WebApplicationFactory&lt;Program&gt;
+/// in the integration test project. No runtime behavior change.
+/// </summary>
+public partial class Program;

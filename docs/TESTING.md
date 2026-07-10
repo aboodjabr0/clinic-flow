@@ -1,3 +1,90 @@
+# ClinicFlow — Testing
+
+Section 0 documents the automated backend test suite and CI. Sections 1–8 are the Phase 11 QA report (kept as-is for the record). Sections 9–11 add ongoing endpoint testing notes, the role-based endpoint coverage matrix, and a deployment testing checklist. The full endpoint reference these tests exercise is in [API.md](API.md).
+
+---
+
+## 0. Automated Backend Tests (xUnit + Testcontainers)
+
+### Overview
+
+`backend/ClinicFlow.Api.Tests/` is an xUnit integration test project that boots the real API in-process with `WebApplicationFactory<Program>` and runs it against a **throwaway PostgreSQL container** started by [Testcontainers](https://dotnet.testcontainers.org/). No local database, credentials, or environment secrets are needed — the only requirement is a running Docker daemon.
+
+Layout:
+
+```txt
+backend/ClinicFlow.Api.Tests/
+  Infrastructure/
+    ClinicFlowWebApplicationFactory.cs   # boots API (env=Testing) against a Postgres container,
+                                         # applies EF migrations, seeds test users
+    ApiTestCollection.cs                 # single xUnit collection → one container per test run
+    TestUsers.cs                         # test-only Admin/Doctor/Receptionist logins + JWT key
+    TestDataSeeder.cs                    # seeds the 3 users + a DoctorProfile linked to the Doctor login
+  Helpers/
+    AuthHelper.cs                        # login via /api/auth/login, cached JWTs, authenticated clients
+    TestData.cs                          # creates patients/doctors/services/appointments/invoices via the API
+    ApiJson.cs                           # reads ApiResponse<T>/ErrorResponse envelopes
+  Tests/
+    HealthEndpointTests.cs  AuthTests.cs  RoleAuthorizationTests.cs  PatientsTests.cs
+    AppointmentsTests.cs    VisitsTests.cs  InvoicesTests.cs  AuditLogsTests.cs
+```
+
+Key design points:
+
+- The factory runs the API with `ASPNETCORE_ENVIRONMENT=Testing`, so the Development demo seeding in `Program.cs` never runs and the dev JWT fallback key is never used; a test-only `Jwt:Key` is injected via configuration.
+- All test classes share one collection fixture (one Postgres container + one host per `dotnet test` run), and every test creates its own uniquely-named records through the API, so tests are order-independent.
+- Dates are always generated relative to `DateTime.UtcNow` (e.g. appointment dates a few days in the future) — nothing is pinned to a calendar date.
+- `Program.cs` ends with `public partial class Program;` purely to make the entry point visible to `WebApplicationFactory` — no runtime change.
+
+### How to run locally
+
+```bash
+# from the repo root (uses ClinicFlow.sln)
+dotnet test
+
+# or from backend/
+cd backend
+dotnet test ClinicFlow.Api.Tests
+```
+
+Requires the .NET 10 SDK and Docker. First run pulls `postgres:16-alpine` and the Testcontainers `ryuk` cleanup image; later runs take a few seconds.
+
+> Note: bare `dotnet test` inside `backend/` is ambiguous because `ClinicFlow.Api.csproj` lives directly in that folder — target the test project explicitly as shown, or run from the repo root.
+
+### What the suite covers (44 tests)
+
+| Area | Covered |
+|---|---|
+| Health | 200 + `Healthy`/app name/`Testing` environment in the envelope |
+| Auth | valid login returns token+user, wrong password → 401, `/api/auth/me` with/without token |
+| Role authorization | anonymous → 401; AdminOnly endpoint and audit logs → 403 for Doctor, 200 for Admin |
+| Patients | Admin/Receptionist can create, Doctor 403, staff can list, invalid email / missing required fields → 400 |
+| Appointments | Admin/Receptionist create, Doctor 403, same-doctor overlap → 400, different-doctor overlap allowed, per-role status transition rules (Receptionist can't set Completed, Doctor can't set Cancelled) |
+| Visits | Admin/Doctor(own appointment) can start, Receptionist 403, doctor on another doctor's appointment 403, double start/complete → 400, start/complete flips appointment status to InProgress/Completed |
+| Invoices/Payments | Admin/Receptionist create + pay, Doctor 403, overpayment → 400, partial payment → PartiallyPaid, full payment → Paid |
+| Audit logs | login success/failure, patient create, and payment add each produce entries; visit audit summaries never contain diagnosis/treatment/prescription text |
+
+### CI
+
+[.github/workflows/backend-ci.yml](../.github/workflows/backend-ci.yml) (“Backend CI”) runs on pushes and pull requests to `main` that touch `backend/**`, `ClinicFlow.sln`, or the workflow itself: checkout → .NET 10 SDK → `dotnet restore` → `dotnet build -c Release` → `dotnet test -c Release`. Docker is preinstalled on GitHub-hosted Ubuntu runners, so Testcontainers needs no external database service and no secrets.
+
+### Known limitations
+
+- Docker is required to run the suite; there is no in-memory fallback (intentional — tests run against real PostgreSQL so migrations, unique indexes, and query translation are exercised).
+- If your local Docker config (`~/.docker/config.json`) holds an expired Docker Hub token, Testcontainers image pulls can fail with `authentication required`; fix with `docker logout` or by pre-pulling `postgres:16-alpine` and the `testcontainers/ryuk` image once.
+- The suite is integration-level (HTTP round-trips); there are no isolated unit tests for services yet, and no frontend tests (out of scope for this phase).
+- Tests share one database per run; they stay independent by creating uniquely-named records rather than by resetting state, so assertions on global counts should be avoided in new tests.
+
+### How to add a new backend test
+
+1. Add a class under `Tests/` marked `[Collection(ApiTestCollection.Name)]` with a `ClinicFlowWebApplicationFactory` constructor parameter.
+2. Get a client with `await _factory.CreateClientForAsync(TestUsers.Admin)` (or `.Doctor` / `.Receptionist`; `_factory.CreateClient()` for anonymous).
+3. Create any records you need through `TestData.*` helpers — never reuse records made by other tests, and generate unique names with `TestData.UniqueSuffix()`.
+4. Read responses with `response.ReadDataAsync<SomeDto>()` (success envelope) or `response.ReadErrorAsync()` (error envelope), asserting on status codes first.
+5. Use `TestData.FutureDate()` for any date the API validates against "today".
+
+---
+
 # ClinicFlow — Phase 11 Testing Report
 
 ## 1. Test Environment
@@ -160,8 +247,76 @@ No other bugs were found during this pass — all documented workflows, validati
 
 - Cancelling an appointment is allowed from any non-terminal status, including `InProgress` (confirmed intentional per the task's own test script: "Try overlapping with Cancelled/NoShow if logic allows" implies cancellation flexibility is acceptable). Not changed since it's a business-logic/product decision, not a defect.
 - `AuthController.Login` has a `// TODO: add login rate limiting` comment already in the code — no per-IP/per-email throttling exists yet. Flagged for a future security-hardening pass; out of scope for Phase 11 (no new features).
-- No automated test project (xUnit/NUnit) exists in the repo; all testing in this phase was manual/scripted (curl + headless Chrome) rather than a checked-in test suite.
+- No automated test project (xUnit/NUnit) existed in the repo at the time of this phase; all Phase 11 testing was manual/scripted (curl + headless Chrome). **Since resolved** — see §0 for the checked-in xUnit suite and CI.
 
 ## 8. Open Bugs
 
 None.
+
+---
+
+## 9. Endpoint Testing Notes
+
+How to test endpoints by hand (the automated suite in §0 covers the core rules; use this for exploratory testing):
+
+1. Start the backend with the `DB_*` env vars set (see §1), then get a token:
+
+   ```bash
+   TOKEN=$(curl -s -X POST http://localhost:5106/api/auth/login \
+     -H "Content-Type: application/json" \
+     -d '{"email":"admin@clinicflow.local","password":"Admin@12345!"}' \
+     | python3 -c "import sys,json; print(json.load(sys.stdin)['data']['token'])")
+   ```
+
+2. Call endpoints with `-H "Authorization: Bearer $TOKEN"`. Swagger UI at `/swagger` is the interactive alternative (use the Authorize button with the raw token).
+
+Conventions to assert in every endpoint test (see [API.md](API.md) → Conventions):
+
+- Success: `200` with `{ "success": true, "data": ..., "message": ... }` — creates also return `200`, not `201`.
+- Errors: `{ "success": false, "message": ..., "traceId": ... }`; never a stack trace or exception detail.
+- Validation failures return `400` with the first data-annotation message; unknown ids return `404` with a module-specific message; duplicate dental-service names and doctor↔account link conflicts return `409`.
+- No token → `401`; wrong role → `403` (get one token per role and repeat the call with each).
+- Paginated lists clamp `pageSize` to 100 and default to page 1 / size 10.
+
+Per-module edge cases worth re-testing after any related change: appointment overlap rules (same doctor blocked, different doctor allowed, cancelled slot rebookable), visit start preconditions and doctor-ownership 403s, visit **complete-with-`{}` preserves notes** (regression for the §6 bug), invoice money math (subtotal − discount = total; overpayment blocked; discount locked after first payment), and doctor-scoped dashboards/reports returning nulls/empty rather than clinic-wide data.
+
+## 10. Role-Based Endpoint Coverage
+
+Backend-verified matrix of who can call what (✓ = allowed, ✗ = `403`; scoped = allowed but restricted to the doctor's own linked profile). This is the contract to re-verify whenever authorization code changes:
+
+| Endpoint group | Admin | Receptionist | Doctor |
+|---|---|---|---|
+| `GET /api/health`, `POST /api/auth/login` | public | public | public |
+| `GET /api/auth/me`, `POST /api/auth/logout`, `GET /api/auth/protected-test` | ✓ | ✓ | ✓ |
+| `GET /api/auth/admin-test` | ✓ | ✗ | ✗ |
+| Doctors / Dental services — read | ✓ | ✓ | ✓ |
+| Doctors / Dental services — create/update/status | ✓ | ✗ | ✗ |
+| Clinic settings — read | ✓ | ✓ | ✓ |
+| Clinic settings — update | ✓ | ✗ | ✗ |
+| Patients — read (list/stats/detail) | ✓ | ✓ | ✓ |
+| Patients — create/update/status | ✓ | ✓ | ✗ |
+| Appointments — read (incl. today/stats/per-patient) | ✓ | ✓ | ✓ |
+| Appointments — create/update/cancel | ✓ | ✓ | ✗ |
+| Appointments — `PATCH /status` | any status | Scheduled/Arrived/Cancelled/NoShow | InProgress/Completed |
+| Visits — read (incl. stats/per-patient/per-appointment) | ✓ | ✓ | ✓ |
+| Visits — start/update/complete | ✓ | ✗ | scoped (own profile only; unlinked Doctor login → 403) |
+| Invoices — read (incl. stats/per-patient/per-appointment/per-visit) | ✓ | ✓ | ✓ |
+| Invoices — create/update, add payment | ✓ | ✓ | ✗ |
+| Dashboard — summary/today/breakdown/recent-activity/follow-ups | ✓ | ✓ | scoped; financial fields null, invoices list empty |
+| Dashboard — revenue | ✓ | ✓ | ✗ |
+| Reports — appointments | ✓ | ✓ | scoped (own; `doctorId` filter ignored) |
+| Reports — revenue / patients | ✓ | ✓ | ✗ |
+| Audit logs — list/detail | ✓ | ✗ | ✗ |
+
+## 11. Deployment Testing Checklist
+
+Run after every deploy (matches [DEPLOYMENT.md](DEPLOYMENT.md)):
+
+- [ ] `GET /api/health` on the deployed backend returns `200` with the expected environment name.
+- [ ] Render logs show migrations applied and (for demo) seeding completed, with no startup errors.
+- [ ] Login from the deployed frontend succeeds for all three roles; a wrong password returns the generic `401` message.
+- [ ] No CORS errors in the browser console (frontend origin matches `CORS_ALLOWED_ORIGINS` exactly).
+- [ ] Doctor login: dashboard shows no financial cards; `GET /api/dashboard/revenue` and `GET /api/reports/revenue` return `403`.
+- [ ] Non-admin: `GET /api/audit-logs` returns `403`.
+- [ ] End-to-end smoke: create patient → book appointment → start visit → save notes → complete visit → create invoice from visit → record partial then final payment → statuses and amounts correct throughout.
+- [ ] Demo admin password is not a dev fallback value from the source; deployment contains fake data only.

@@ -1,0 +1,41 @@
+name: Backend CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "backend/**"
+      - "ClinicFlow.sln"
+      - ".github/workflows/backend-ci.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "backend/**"
+      - "ClinicFlow.sln"
+      - ".github/workflows/backend-ci.yml"
+
+jobs:
+  build-and-test:
+    name: Build and test backend
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Restore
+        run: dotnet restore ClinicFlow.sln
+
+      - name: Build (Release)
+        run: dotnet build ClinicFlow.sln --configuration Release --no-restore
+
+      # Integration tests start a throwaway PostgreSQL container via
+      # Testcontainers; Docker is preinstalled on GitHub-hosted Ubuntu
+      # runners, so no external database service is needed.
+      - name: Test
+        run: dotnet test ClinicFlow.sln --configuration Release --no-build --verbosity normal

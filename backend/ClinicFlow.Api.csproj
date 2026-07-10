@@ -6,6 +6,15 @@
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
+  <!-- ClinicFlow.Api.Tests lives nested inside this project directory; keep
+       its sources out of the API project's default compile/content globs. -->
+  <ItemGroup>
+    <Compile Remove="ClinicFlow.Api.Tests/**" />
+    <Content Remove="ClinicFlow.Api.Tests/**" />
+    <None Remove="ClinicFlow.Api.Tests/**" />
+    <EmbeddedResource Remove="ClinicFlow.Api.Tests/**" />
+  </ItemGroup>
+
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.9" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.9" />

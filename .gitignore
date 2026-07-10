@@ -1,5 +1,33 @@
+# Environment / secrets — never commit real credentials
 .env
 .env.*
+!.env.example
 frontend/.env.local
 backend/.env
-".claude/settings.local.json"
+backend/appsettings.*.local.json
+
+# Claude Code local settings
+.claude/settings.local.json
+
+# .NET build artifacts
+[Bb]in/
+[Oo]bj/
+TestResults/
+publish/
+*.user
+
+# IDE / editor
+.vs/
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.suo
+*.swp
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
