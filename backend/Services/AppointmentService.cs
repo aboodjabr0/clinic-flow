@@ -12,15 +12,18 @@ namespace ClinicFlow.Api.Services;
 public class AppointmentService : IAppointmentService
 {
     private const int MaxPageSize = 100;
+    private const int MaxCalendarRangeDays = 62;
     private const string TimeFormat = "HH:mm";
 
     private readonly AppDbContext _context;
     private readonly IAuditLogService _auditLogService;
+    private readonly ICurrentUserService _currentUserService;
 
-    public AppointmentService(AppDbContext context, IAuditLogService auditLogService)
+    public AppointmentService(AppDbContext context, IAuditLogService auditLogService, ICurrentUserService currentUserService)
     {
         _context = context;
         _auditLogService = auditLogService;
+        _currentUserService = currentUserService;
     }
 
     /// <summary>
@@ -86,6 +89,18 @@ public class AppointmentService : IAppointmentService
         var pageNumber = query.PageNumber < 1 ? 1 : query.PageNumber;
         var pageSize = query.PageSize < 1 ? 10 : Math.Min(query.PageSize, MaxPageSize);
 
+        var (effectiveDoctorId, doctorHasNoProfile) = await ResolveDoctorScopeAsync(query.DoctorId);
+        if (doctorHasNoProfile)
+        {
+            return (new PaginatedResponse<AppointmentListItemDto>
+            {
+                Items = [],
+                PageNumber = pageNumber,
+                PageSize = pageSize,
+                TotalCount = 0
+            }, null);
+        }
+
         var appointments = _context.Appointments.AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(query.Search))
@@ -114,9 +129,9 @@ public class AppointmentService : IAppointmentService
             appointments = appointments.Where(a => a.AppointmentDate <= query.ToDate.Value);
         }
 
-        if (query.DoctorId.HasValue)
+        if (effectiveDoctorId.HasValue)
         {
-            appointments = appointments.Where(a => a.DoctorProfileId == query.DoctorId.Value);
+            appointments = appointments.Where(a => a.DoctorProfileId == effectiveDoctorId.Value);
         }
 
         if (query.PatientId.HasValue)
@@ -153,6 +168,140 @@ public class AppointmentService : IAppointmentService
         };
 
         return (result, null);
+    }
+
+    /// <summary>
+    /// Unpaginated projection for calendar day/week views. Doctors are always
+    /// scoped to their own DoctorProfile (resolved via the AppUserId link),
+    /// regardless of any doctorId query parameter — Admin/Receptionist can
+    /// optionally filter by doctorId or see all doctors.
+    /// </summary>
+    public async Task<(List<CalendarAppointmentDto>? Result, string? Error)> GetCalendarAppointmentsAsync(CalendarQueryDto query)
+    {
+        if (!query.StartDate.HasValue || !query.EndDate.HasValue)
+        {
+            return (null, "startDate and endDate are required.");
+        }
+
+        if (query.EndDate.Value < query.StartDate.Value)
+        {
+            return (null, "endDate must be on or after startDate.");
+        }
+
+        if (query.EndDate.Value.DayNumber - query.StartDate.Value.DayNumber > MaxCalendarRangeDays)
+        {
+            return (null, $"Date range cannot exceed {MaxCalendarRangeDays} days.");
+        }
+
+        AppointmentStatus? statusFilter = null;
+        if (!string.IsNullOrWhiteSpace(query.Status))
+        {
+            if (!Enum.TryParse<AppointmentStatus>(query.Status, ignoreCase: true, out var parsedStatus))
+            {
+                return (null, "Invalid status filter.");
+            }
+            statusFilter = parsedStatus;
+        }
+
+        var appointments = _context.Appointments
+            .Where(a => a.AppointmentDate >= query.StartDate.Value && a.AppointmentDate <= query.EndDate.Value);
+
+        var (effectiveDoctorId, doctorHasNoProfile) = await ResolveDoctorScopeAsync(query.DoctorId);
+        if (doctorHasNoProfile)
+        {
+            return (new List<CalendarAppointmentDto>(), null);
+        }
+
+        if (effectiveDoctorId.HasValue)
+        {
+            appointments = appointments.Where(a => a.DoctorProfileId == effectiveDoctorId.Value);
+        }
+
+        if (statusFilter.HasValue)
+        {
+            appointments = appointments.Where(a => a.Status == statusFilter.Value);
+        }
+
+        var rows = await appointments
+            .OrderBy(a => a.AppointmentDate)
+            .ThenBy(a => a.StartTime)
+            .Select(a => new CalendarRow(
+                a.Id,
+                a.PatientId,
+                a.Patient!.FirstName + " " + a.Patient.LastName,
+                a.DoctorProfileId,
+                a.DoctorProfile!.FullName,
+                a.DentalServiceId,
+                a.DentalService!.Name,
+                a.AppointmentDate,
+                a.StartTime,
+                a.EndTime,
+                a.Status,
+                a.Reason,
+                _context.Visits.Any(v => v.AppointmentId == a.Id),
+                _context.Invoices
+                    .Where(i => i.AppointmentId == a.Id)
+                    .OrderByDescending(i => i.CreatedAtUtc)
+                    .Select(i => (PaymentStatus?)i.Status)
+                    .FirstOrDefault()))
+            .ToListAsync();
+
+        return (rows.Select(ToCalendarDto).ToList(), null);
+    }
+
+    private record CalendarRow(
+        Guid Id,
+        Guid PatientId,
+        string PatientFullName,
+        Guid DoctorProfileId,
+        string DoctorFullName,
+        Guid DentalServiceId,
+        string ServiceName,
+        DateOnly AppointmentDate,
+        TimeOnly StartTime,
+        TimeOnly EndTime,
+        AppointmentStatus Status,
+        string? Reason,
+        bool HasVisit,
+        PaymentStatus? InvoiceStatus);
+
+    private static CalendarAppointmentDto ToCalendarDto(CalendarRow row) => new()
+    {
+        Id = row.Id,
+        PatientId = row.PatientId,
+        PatientFullName = row.PatientFullName,
+        DoctorProfileId = row.DoctorProfileId,
+        DoctorFullName = row.DoctorFullName,
+        DentalServiceId = row.DentalServiceId,
+        ServiceName = row.ServiceName,
+        AppointmentDate = row.AppointmentDate,
+        StartTime = row.StartTime.ToString(TimeFormat, CultureInfo.InvariantCulture),
+        EndTime = row.EndTime.ToString(TimeFormat, CultureInfo.InvariantCulture),
+        Status = row.Status.ToString(),
+        Reason = row.Reason,
+        HasVisit = row.HasVisit,
+        InvoiceStatus = row.InvoiceStatus?.ToString()
+    };
+
+    /// <summary>
+    /// Resolves doctorId scoping shared by the list and calendar queries: a
+    /// Doctor caller is always scoped to their own DoctorProfile (resolved
+    /// via the AppUserId link), ignoring any requested doctorId entirely;
+    /// Admin/Receptionist may optionally filter by the requested doctorId.
+    /// </summary>
+    private async Task<(Guid? EffectiveDoctorId, bool DoctorHasNoProfile)> ResolveDoctorScopeAsync(Guid? requestedDoctorId)
+    {
+        if (_currentUserService.Role != nameof(UserRole.Doctor))
+        {
+            return (requestedDoctorId, false);
+        }
+
+        var ownDoctorProfileId = await _context.DoctorProfiles
+            .Where(d => d.AppUserId == _currentUserService.UserId)
+            .Select(d => (Guid?)d.Id)
+            .FirstOrDefaultAsync();
+
+        return ownDoctorProfileId is null ? (null, true) : (ownDoctorProfileId, false);
     }
 
     public async Task<List<AppointmentListItemDto>> GetTodayAppointmentsAsync()

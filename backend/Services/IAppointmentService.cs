@@ -6,6 +6,7 @@ namespace ClinicFlow.Api.Services;
 public interface IAppointmentService
 {
     Task<(PaginatedResponse<AppointmentListItemDto>? Result, string? Error)> GetAppointmentsAsync(AppointmentQueryDto query);
+    Task<(List<CalendarAppointmentDto>? Result, string? Error)> GetCalendarAppointmentsAsync(CalendarQueryDto query);
     Task<List<AppointmentListItemDto>> GetTodayAppointmentsAsync();
     Task<AppointmentDto?> GetAppointmentByIdAsync(Guid id);
     Task<List<AppointmentListItemDto>> GetPatientAppointmentsAsync(Guid patientId);

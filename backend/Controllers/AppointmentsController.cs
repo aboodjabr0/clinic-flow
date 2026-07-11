@@ -43,6 +43,18 @@ public class AppointmentsController : ControllerBase
         return Ok(ApiResponse<PaginatedResponse<AppointmentListItemDto>>.Ok(result!));
     }
 
+    [HttpGet("api/appointments/calendar")]
+    public async Task<ActionResult<ApiResponse<List<CalendarAppointmentDto>>>> GetCalendar([FromQuery] CalendarQueryDto query)
+    {
+        var (result, error) = await _appointmentService.GetCalendarAppointmentsAsync(query);
+        if (error is not null)
+        {
+            return BadRequest(new ErrorResponse { Message = error, TraceId = HttpContext.TraceIdentifier });
+        }
+
+        return Ok(ApiResponse<List<CalendarAppointmentDto>>.Ok(result!));
+    }
+
     [HttpGet("api/appointments/today")]
     public async Task<ActionResult<ApiResponse<List<AppointmentListItemDto>>>> GetToday()
     {
