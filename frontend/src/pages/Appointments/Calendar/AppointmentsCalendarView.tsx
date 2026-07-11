@@ -5,6 +5,7 @@ import { Input } from "../../../components/common/Input";
 import { Select } from "../../../components/common/Select";
 import { EmptyState } from "../../../components/common/EmptyState";
 import { LoadingState } from "../../../components/common/LoadingState";
+import { WhatsAppReminderModal } from "../../../components/appointments/WhatsAppReminderModal";
 import { appointmentsApi } from "../../../api/appointmentsApi";
 import { ApiError } from "../../../api/apiClient";
 import { useTranslation } from "../../../i18n/useTranslation";
@@ -41,6 +42,7 @@ export function AppointmentsCalendarView({ doctors, isDoctorRole, canManageAppoi
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [appointments, setAppointments] = useState<CalendarAppointment[]>([]);
   const [loadState, setLoadState] = useState<LoadState>({ status: "loading" });
+  const [remindingAppointment, setRemindingAppointment] = useState<CalendarAppointment | null>(null);
 
   const range = useMemo(() => {
     if (viewMode === "day") {
@@ -163,6 +165,7 @@ export function AppointmentsCalendarView({ doctors, isDoctorRole, canManageAppoi
           canManageAppointments={canManageAppointments}
           onViewDetails={goToDetails}
           onEdit={onEdit}
+          onSendReminder={setRemindingAppointment}
         />
       )}
 
@@ -173,6 +176,19 @@ export function AppointmentsCalendarView({ doctors, isDoctorRole, canManageAppoi
           canManageAppointments={canManageAppointments}
           onViewDetails={goToDetails}
           onEdit={onEdit}
+          onSendReminder={setRemindingAppointment}
+        />
+      )}
+
+      {remindingAppointment && (
+        <WhatsAppReminderModal
+          isOpen={remindingAppointment !== null}
+          onClose={() => setRemindingAppointment(null)}
+          patientName={remindingAppointment.patientFullName}
+          patientPhone={remindingAppointment.patientPhoneNumber}
+          doctorName={remindingAppointment.doctorFullName}
+          appointmentDate={remindingAppointment.appointmentDate}
+          appointmentTime={remindingAppointment.startTime}
         />
       )}
     </div>

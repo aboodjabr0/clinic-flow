@@ -11,6 +11,7 @@ import { Select } from "../../components/common/Select";
 import { Textarea } from "../../components/common/Textarea";
 import { Modal } from "../../components/common/Modal";
 import { Pagination } from "../../components/common/Pagination";
+import { WhatsAppReminderModal } from "../../components/appointments/WhatsAppReminderModal";
 import { StatCard } from "../../components/dashboard/StatCard";
 import { AppointmentsCalendarView } from "./Calendar/AppointmentsCalendarView";
 import { appointmentsApi } from "../../api/appointmentsApi";
@@ -118,6 +119,8 @@ export function AppointmentsPage() {
   const [cancellingAppointment, setCancellingAppointment] = useState<AppointmentListItem | null>(null);
   const [cancelReason, setCancelReason] = useState("");
   const [isCancelling, setIsCancelling] = useState(false);
+
+  const [remindingAppointment, setRemindingAppointment] = useState<AppointmentListItem | null>(null);
 
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -546,6 +549,11 @@ export function AppointmentsPage() {
                             {t("common.edit")}
                           </Button>
                         )}
+                        {canManageAppointments && (
+                          <Button variant="ghost" onClick={() => setRemindingAppointment(appointment)}>
+                            {t("whatsapp.reminderButton")}
+                          </Button>
+                        )}
                         {allowedStatuses.length > 0 && (
                           <Select
                             aria-label={t("appointments.changeStatus")}
@@ -689,6 +697,18 @@ export function AppointmentsPage() {
           </div>
         </form>
       </Modal>
+
+      {remindingAppointment && (
+        <WhatsAppReminderModal
+          isOpen={remindingAppointment !== null}
+          onClose={() => setRemindingAppointment(null)}
+          patientName={remindingAppointment.patientFullName}
+          patientPhone={remindingAppointment.patientPhoneNumber}
+          doctorName={remindingAppointment.doctorFullName}
+          appointmentDate={remindingAppointment.appointmentDate}
+          appointmentTime={remindingAppointment.startTime}
+        />
+      )}
 
       <Modal
         isOpen={cancellingAppointment !== null}

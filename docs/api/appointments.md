@@ -166,7 +166,7 @@ Error status codes: `401`, `403`.
 ## GET /api/appointments/calendar
 
 Description:
-Returns an unpaginated, calendar-ready projection of appointments in a date range, for the Day/Week calendar view on the Appointments page. Excludes `notes` and `cancellationReason` (only list-safe fields are returned).
+Returns an unpaginated, calendar-ready projection of appointments in a date range, for the Day/Week calendar view on the Appointments page. Excludes `notes` and `cancellationReason` (only list-safe fields are returned). Includes `patientPhoneNumber` so the calendar card can offer the manual WhatsApp reminder action (see [USER_GUIDE.md](../USER_GUIDE.md)) — same field already exposed by the list and detail endpoints above, at the same `StaffOnly` access level.
 
 Auth:
 Required.
@@ -203,6 +203,7 @@ Example response:
       "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
       "patientId": "8b7d2f10-1111-4562-b3fc-2c963f66afa6",
       "patientFullName": "John Smith",
+      "patientPhoneNumber": "0790000001",
       "doctorProfileId": "9c8e3a21-2222-4562-b3fc-2c963f66afa6",
       "doctorFullName": "Dr. Sarah Mitchell",
       "dentalServiceId": "1d9f4b32-3333-4562-b3fc-2c963f66afa6",

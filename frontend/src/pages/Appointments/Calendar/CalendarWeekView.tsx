@@ -11,9 +11,17 @@ interface CalendarWeekViewProps {
   canManageAppointments: boolean;
   onViewDetails: (id: string) => void;
   onEdit: (id: string) => void;
+  onSendReminder: (appointment: CalendarAppointment) => void;
 }
 
-export function CalendarWeekView({ weekDays, appointments, canManageAppointments, onViewDetails, onEdit }: CalendarWeekViewProps) {
+export function CalendarWeekView({
+  weekDays,
+  appointments,
+  canManageAppointments,
+  onViewDetails,
+  onEdit,
+  onSendReminder,
+}: CalendarWeekViewProps) {
   const { t, language } = useTranslation();
 
   if (appointments.length === 0) {
@@ -43,6 +51,7 @@ export function CalendarWeekView({ weekDays, appointments, canManageAppointments
                     canManageAppointments={canManageAppointments}
                     onViewDetails={onViewDetails}
                     onEdit={onEdit}
+                    onSendReminder={onSendReminder}
                     compact
                   />
                 ))

@@ -10,6 +10,8 @@ import { Textarea } from "../../components/common/Textarea";
 import { Modal } from "../../components/common/Modal";
 import { CreateInvoiceModal } from "../../components/invoices/CreateInvoiceModal";
 import { InvoiceSummaryCard } from "../../components/invoices/InvoiceSummaryCard";
+import { WhatsAppReminderModal } from "../../components/appointments/WhatsAppReminderModal";
+import { PatientMedicalAlerts } from "../../components/patients/PatientMedicalAlerts";
 import { appointmentsApi } from "../../api/appointmentsApi";
 import { visitsApi } from "../../api/visitsApi";
 import { invoicesApi } from "../../api/invoicesApi";
@@ -50,6 +52,7 @@ export function AppointmentDetailsPage() {
   const { t } = useTranslation();
   const canManageVisits = hasAnyRole(["Admin", "Doctor"]);
   const canManageInvoices = hasAnyRole(["Admin", "Receptionist"]);
+  const canSendReminders = hasAnyRole(["Admin", "Receptionist"]);
 
   const [appointment, setAppointment] = useState<Appointment | null>(null);
   const [view, setView] = useState<ViewState>({ status: "loading" });
@@ -58,6 +61,7 @@ export function AppointmentDetailsPage() {
   const [invoiceView, setInvoiceView] = useState<InvoiceViewState>({ status: "loading" });
   const [isCreateInvoiceModalOpen, setIsCreateInvoiceModalOpen] = useState(false);
   const [isStartModalOpen, setIsStartModalOpen] = useState(false);
+  const [isReminderModalOpen, setIsReminderModalOpen] = useState(false);
   const [chiefComplaint, setChiefComplaint] = useState("");
   const [startError, setStartError] = useState<string | null>(null);
   const [isStarting, setIsStarting] = useState(false);
@@ -157,9 +161,16 @@ export function AppointmentDetailsPage() {
         title={t("appointmentDetails.title")}
         subtitle={t("appointmentDetails.subtitle")}
         actions={
-          <Button variant="secondary" onClick={() => navigate("/appointments")}>
-            {t("appointmentDetails.backToAppointments")}
-          </Button>
+          <>
+            {canSendReminders && appointment && (
+              <Button variant="secondary" onClick={() => setIsReminderModalOpen(true)}>
+                {t("whatsapp.reminderButton")}
+              </Button>
+            )}
+            <Button variant="secondary" onClick={() => navigate("/appointments")}>
+              {t("appointmentDetails.backToAppointments")}
+            </Button>
+          </>
         }
       />
 
@@ -177,6 +188,7 @@ export function AppointmentDetailsPage() {
 
       {view.status === "loaded" && appointment && (
         <div className="appointment-details-stack">
+          <PatientMedicalAlerts patientId={appointment.patientId} />
           <Card>
             <div className="appointment-details-header">
               <div>
@@ -354,6 +366,18 @@ export function AppointmentDetailsPage() {
             serviceName: appointment.serviceName,
             subtotalAmount: appointment.servicePrice,
           }}
+        />
+      )}
+
+      {appointment && (
+        <WhatsAppReminderModal
+          isOpen={isReminderModalOpen}
+          onClose={() => setIsReminderModalOpen(false)}
+          patientName={appointment.patientFullName}
+          patientPhone={appointment.patientPhoneNumber}
+          doctorName={appointment.doctorFullName}
+          appointmentDate={appointment.appointmentDate}
+          appointmentTime={appointment.startTime}
         />
       )}
 

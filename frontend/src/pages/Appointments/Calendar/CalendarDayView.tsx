@@ -11,9 +11,17 @@ interface CalendarDayViewProps {
   canManageAppointments: boolean;
   onViewDetails: (id: string) => void;
   onEdit: (id: string) => void;
+  onSendReminder: (appointment: CalendarAppointment) => void;
 }
 
-export function CalendarDayView({ date, appointments, canManageAppointments, onViewDetails, onEdit }: CalendarDayViewProps) {
+export function CalendarDayView({
+  date,
+  appointments,
+  canManageAppointments,
+  onViewDetails,
+  onEdit,
+  onSendReminder,
+}: CalendarDayViewProps) {
   const { t, language } = useTranslation();
   const dayAppointments = appointmentsOnDate(appointments, date);
 
@@ -38,6 +46,7 @@ export function CalendarDayView({ date, appointments, canManageAppointments, onV
                   canManageAppointments={canManageAppointments}
                   onViewDetails={onViewDetails}
                   onEdit={onEdit}
+                  onSendReminder={onSendReminder}
                 />
               ))}
             </div>

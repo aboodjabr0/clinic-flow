@@ -99,6 +99,7 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IDentalServiceCatalogService, DentalServiceCatalogService>();
 builder.Services.AddScoped<IClinicSettingsService, ClinicSettingsService>();
 builder.Services.AddScoped<IPatientService, PatientService>();
+builder.Services.AddScoped<IPatientMedicalHistoryService, PatientMedicalHistoryService>();
 builder.Services.AddScoped<IAppointmentService, AppointmentService>();
 builder.Services.AddScoped<IVisitService, VisitService>();
 builder.Services.AddScoped<IInvoiceService, InvoiceService>();

@@ -10,6 +10,7 @@ import { Input } from "../../components/common/Input";
 import { Textarea } from "../../components/common/Textarea";
 import { Modal } from "../../components/common/Modal";
 import { CreateInvoiceModal } from "../../components/invoices/CreateInvoiceModal";
+import { PatientMedicalAlerts } from "../../components/patients/PatientMedicalAlerts";
 import { InvoiceSummaryCard } from "../../components/invoices/InvoiceSummaryCard";
 import { visitsApi } from "../../api/visitsApi";
 import { invoicesApi } from "../../api/invoicesApi";
@@ -183,6 +184,7 @@ export function VisitDetailsPage() {
 
       {view.status === "loaded" && visit && (
         <div className="visit-details-stack">
+          <PatientMedicalAlerts patientId={visit.patientId} />
           <Card
             actions={
               canManageVisits ? (

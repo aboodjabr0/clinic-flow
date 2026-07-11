@@ -9,6 +9,7 @@ interface CalendarEventCardProps {
   canManageAppointments: boolean;
   onViewDetails: (id: string) => void;
   onEdit: (id: string) => void;
+  onSendReminder: (appointment: CalendarAppointment) => void;
   compact?: boolean;
 }
 
@@ -17,6 +18,7 @@ export function CalendarEventCard({
   canManageAppointments,
   onViewDetails,
   onEdit,
+  onSendReminder,
   compact = false,
 }: CalendarEventCardProps) {
   const { t } = useTranslation();
@@ -70,6 +72,18 @@ export function CalendarEventCard({
             }}
           >
             {t("calendar.reschedule")}
+          </button>
+        )}
+        {canManageAppointments && (
+          <button
+            type="button"
+            className="calendar-event-link"
+            onClick={(e) => {
+              e.stopPropagation();
+              onSendReminder(appointment);
+            }}
+          >
+            {t("whatsapp.reminderButton")}
           </button>
         )}
       </div>

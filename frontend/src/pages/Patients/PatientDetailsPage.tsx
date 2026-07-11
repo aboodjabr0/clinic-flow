@@ -11,6 +11,8 @@ import { appointmentsApi } from "../../api/appointmentsApi";
 import { visitsApi } from "../../api/visitsApi";
 import { invoicesApi } from "../../api/invoicesApi";
 import { ApiError } from "../../api/apiClient";
+import { MedicalHistorySection } from "../../components/patients/MedicalHistorySection";
+import { useAuth } from "../../context/AuthContext";
 import { useTranslation } from "../../i18n/useTranslation";
 import { calculateAge, formatDate, GENDER_LABEL_KEYS } from "../../utils/patient";
 import { APPOINTMENT_STATUS_LABEL_KEYS, APPOINTMENT_STATUS_VARIANTS } from "../../utils/appointment";
@@ -30,7 +32,9 @@ type ViewState =
 export function PatientDetailsPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { hasAnyRole } = useAuth();
   const { t } = useTranslation();
+  const canEditMedicalHistory = hasAnyRole(["Admin", "Doctor"]);
 
   const [patient, setPatient] = useState<Patient | null>(null);
   const [view, setView] = useState<ViewState>({ status: "loading" });
@@ -180,13 +184,21 @@ export function PatientDetailsPage() {
             </div>
           </Card>
 
-          <Card title={t("patientDetails.allergies")}>
-            <p className="patient-details-notes">{patient.allergies ?? t("patientDetails.noAllergies")}</p>
-          </Card>
+          {id && <MedicalHistorySection patientId={id} canEdit={canEditMedicalHistory} />}
 
-          <Card title={t("patientDetails.medicalNotes")}>
-            <p className="patient-details-notes">{patient.medicalNotes ?? t("patientDetails.noMedicalNotes")}</p>
-          </Card>
+          {/* Legacy free-text intake notes from the patient form — shown only
+              when present so they don't duplicate the structured history. */}
+          {patient.allergies && (
+            <Card title={t("patientDetails.allergies")}>
+              <p className="patient-details-notes">{patient.allergies}</p>
+            </Card>
+          )}
+
+          {patient.medicalNotes && (
+            <Card title={t("patientDetails.medicalNotes")}>
+              <p className="patient-details-notes">{patient.medicalNotes}</p>
+            </Card>
+          )}
 
           <Card
             title={t("patientDetails.appointments")}

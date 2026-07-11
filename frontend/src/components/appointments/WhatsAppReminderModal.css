@@ -1,0 +1,48 @@
+.whatsapp-reminder-subtitle {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+.whatsapp-reminder-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: var(--space-3) var(--space-4);
+  background-color: var(--color-neutral-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+}
+
+.whatsapp-reminder-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.whatsapp-reminder-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
+.whatsapp-reminder-value {
+  font-size: 14px;
+  color: var(--color-text-primary);
+}
+
+.whatsapp-reminder-message-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin-bottom: var(--space-2);
+}
+
+.whatsapp-reminder-hint {
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+.whatsapp-reminder-error {
+  font-size: 14px;
+  color: var(--color-danger);
+}

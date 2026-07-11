@@ -18,6 +18,7 @@ public class AppDbContext : DbContext
     public DbSet<DentalService> DentalServices => Set<DentalService>();
     public DbSet<ClinicSettings> ClinicSettings => Set<ClinicSettings>();
     public DbSet<Patient> Patients => Set<Patient>();
+    public DbSet<PatientMedicalHistory> PatientMedicalHistories => Set<PatientMedicalHistory>();
     public DbSet<Appointment> Appointments => Set<Appointment>();
     public DbSet<Visit> Visits => Set<Visit>();
     public DbSet<Invoice> Invoices => Set<Invoice>();
@@ -92,6 +93,36 @@ public class AppDbContext : DbContext
             entity.HasIndex(p => p.PhoneNumber);
             entity.HasIndex(p => p.Email);
             entity.HasIndex(p => p.IsActive);
+        });
+
+        modelBuilder.Entity<PatientMedicalHistory>(entity =>
+        {
+            entity.Property(h => h.PatientId).IsRequired();
+            entity.Property(h => h.Allergies).HasMaxLength(1000);
+            entity.Property(h => h.ChronicDiseases).HasMaxLength(1000);
+            entity.Property(h => h.CurrentMedications).HasMaxLength(1000);
+            entity.Property(h => h.PreviousSurgeries).HasMaxLength(1000);
+            entity.Property(h => h.PregnancyStatus).HasConversion<string>().HasMaxLength(32);
+            entity.Property(h => h.SmokingStatus).HasConversion<string>().HasMaxLength(32);
+            entity.Property(h => h.DiabetesStatus).HasConversion<string>().HasMaxLength(32);
+            entity.Property(h => h.BloodPressureNotes).HasMaxLength(500);
+            entity.Property(h => h.MedicalAlerts).HasMaxLength(1000);
+            entity.Property(h => h.EmergencyContactName).HasMaxLength(200);
+            entity.Property(h => h.EmergencyContactPhone).HasMaxLength(30);
+
+            // One medical history record per patient — the PUT endpoint
+            // upserts, and the database guarantees no duplicates slip in.
+            entity.HasIndex(h => h.PatientId).IsUnique();
+
+            entity.HasOne(h => h.Patient)
+                .WithMany()
+                .HasForeignKey(h => h.PatientId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(h => h.LastUpdatedByUser)
+                .WithMany()
+                .HasForeignKey(h => h.LastUpdatedByUserId)
+                .OnDelete(DeleteBehavior.SetNull);
         });
 
         modelBuilder.Entity<Appointment>(entity =>

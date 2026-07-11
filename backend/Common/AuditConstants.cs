@@ -26,6 +26,7 @@ public static class AuditActions
 public static class AuditEntityTypes
 {
     public const string Patient = "Patient";
+    public const string PatientMedicalHistory = "PatientMedicalHistory";
     public const string DoctorProfile = "DoctorProfile";
     public const string DentalService = "DentalService";
     public const string ClinicSettings = "ClinicSettings";

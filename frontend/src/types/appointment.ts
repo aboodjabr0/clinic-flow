@@ -81,6 +81,7 @@ export interface CalendarAppointment {
   id: string;
   patientId: string;
   patientFullName: string;
+  patientPhoneNumber: string;
   doctorProfileId: string;
   doctorFullName: string;
   dentalServiceId: string;

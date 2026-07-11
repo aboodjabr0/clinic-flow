@@ -6,6 +6,8 @@ Patient records: contact details, demographics, emergency contact, and free-text
 
 Role summary: all staff can **view** patients; only Admin and Receptionist can **create/update/deactivate** them. Doctors are view-only.
 
+Structured pre-treatment medical history (risk flags, statuses, allergy/medication notes) lives at `/api/patients/{patientId}/medical-history` — see [medical-history.md](medical-history.md).
+
 ## GET /api/patients
 
 Description:

@@ -12,6 +12,7 @@ Signing in: open the app, enter your email and password. Sessions last 60 minute
 |---|---|---|---|
 | Dashboard | full, incl. revenue | full, incl. revenue | own schedule only, no revenue |
 | Patients | manage | manage | view |
+| Medical history | view + edit | view | view + edit |
 | Appointments | manage | manage | view + run own |
 | Doctors | manage | view | view |
 | Services | manage | view | view |
@@ -39,6 +40,28 @@ The Appointments page (`/appointments`) offers two ways to see the schedule, swi
 **List View** is the original table: full-text search, single-date filter, pagination, and inline status-change controls — unchanged from before. Deep links from a patient's page (`View appointments`) open directly into List View, pre-filtered to that patient, since the calendar doesn't filter by patient.
 
 **Doctor filtering**: Admin and Receptionist can filter either view by any doctor, or view all doctors at once. A Doctor login never sees the doctor filter — they only ever see their own appointments, and this is enforced by the backend (not just hidden in the UI), so a Doctor account cannot see another doctor's schedule by any means.
+
+**WhatsApp reminders** — Admin and Receptionist see a **WhatsApp Reminder** action on every appointment (List row, Calendar card, and the appointment detail page). Clicking it opens a preview showing the patient, phone, doctor, date, time, and clinic, with an editable reminder message pre-filled in English or Arabic (matching the current UI language). Click **Open WhatsApp** to launch web.whatsapp.com/WhatsApp with the message pre-filled in a new browser tab — nothing is sent automatically, and staff can edit the text first. If the patient's phone number is missing or isn't a recognizable Jordan mobile number (`07xxxxxxxx` or `+9627xxxxxxxx`), the preview shows an error instead of a message. This is a manual, staff-triggered action only — there is no WhatsApp Business API integration, no automatic/scheduled reminders, and no record is kept of whether a reminder was actually sent. Doctor logins do not see this action; patient communication stays a receptionist/admin responsibility.
+
+---
+
+## Patient Medical History
+
+Every patient's detail page has a **Medical History** section so the dentist can check important health information before treatment. It records:
+
+- **Alerts** — allergies, free-text medical alerts, blood thinners, anesthesia sensitivity.
+- **Conditions** — heart disease, diabetes, chronic diseases, blood pressure notes, pregnancy status.
+- **Medications** — current medications and previous surgeries.
+- **Lifestyle** — smoking status.
+- **Emergency contact** — name and phone.
+
+**Risk banner** — if the patient has any high-risk items recorded (allergies, medical alerts, blood thinners, anesthesia sensitivity, heart disease, diabetes, or pregnancy), a red **Medical risk alerts** banner appears at the top of the section. The same banner also appears, in compact form (flags only, no medical text), at the top of the appointment detail and visit detail pages, so a doctor sees it before starting treatment.
+
+**Who can edit** — Admin and Doctor can add/edit medical history (it's clinical data); Receptionist can view it but sees a *View only* badge instead of an edit button, and the backend enforces this regardless of the UI. The section shows when the history was last updated and by whom.
+
+**Privacy** — medical history never appears in WhatsApp reminder messages, printed invoices/receipts, dashboard reports, or appointment list/calendar cards. Edits are recorded in the Audit Logs without the medical text itself (only "Medical history updated for patient …").
+
+This phase stores text notes and yes/no flags only — no file uploads, lab records, or scanned documents.
 
 ---
 
@@ -83,7 +106,7 @@ Every create, edit, activate/deactivate, and password reset is recorded in the A
 
 The Receptionist runs the front desk: patients, scheduling, and money.
 
-**Patients** — register new patients (name, phone, gender required; email, date of birth, address, emergency contact, medical notes, and allergies optional), search and filter the list, edit records, and deactivate patients who leave the practice. The patient detail page shows their appointment, visit, and invoice history.
+**Patients** — register new patients (name, phone, gender required; email, date of birth, address, emergency contact, medical notes, and allergies optional), search and filter the list, edit records, and deactivate patients who leave the practice. The patient detail page shows their appointment, visit, and invoice history, plus a read-only view of the medical history section (editing it is reserved for Admin and Doctor — see *Patient Medical History* above).
 
 **Appointments** — book appointments by choosing patient, doctor, service, date, and time. The system blocks double-booking a doctor and past-dated bookings; a cancelled slot can be rebooked. Day to day: mark patients **Arrived** when they check in, mark **NoShow**, reschedule, and cancel with a reason. (Moving an appointment to In Progress/Completed happens through the doctor's visit workflow.) See **Appointments: Calendar and List views** below.
 
@@ -107,7 +130,7 @@ The Doctor's view is scoped: their dashboard, visits, and reports cover only app
 
 **Dashboard** — own headline stats (today's appointments, scheduled, visits in progress, completed this month), own today-schedule, status breakdown, recent activity, and upcoming follow-ups. No revenue or invoice cards.
 
-**Patients** — view the full patient list and each patient's record, including medical notes, allergies, and their appointment/visit history. Doctors cannot create or edit patient records — ask reception.
+**Patients** — view the full patient list and each patient's record, including medical notes, allergies, and their appointment/visit history. Doctors cannot create or edit patient records — ask reception. Doctors **can** add and edit the patient's **Medical History** section (see *Patient Medical History* above).
 
 **Appointments** — view the schedule. Doctors don't book or cancel; they act on appointments through visits. The doctor filter is hidden — a Doctor login always sees only their own appointments, in both Calendar and List views. See **Appointments: Calendar and List views** below.
 

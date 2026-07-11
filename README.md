@@ -10,7 +10,7 @@ ClinicFlow is a clinic *operations* system. It deliberately provides **no diagno
 
 | Document | Contents |
 |---|---|
-| [docs/API.md](docs/API.md) | Full API reference (61 endpoints, all modules) — also split per module under [docs/api/](docs/api/) |
+| [docs/API.md](docs/API.md) | Full API reference (70 endpoints, all modules) — also split per module under [docs/api/](docs/api/) |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Architecture, folder structure, auth flow, data flow, patterns |
 | [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) | Demo deployment (Render + Neon + static host), env vars, checklist |
 | [docs/USER_GUIDE.md](docs/USER_GUIDE.md) | How each role uses the system |
@@ -20,9 +20,11 @@ ClinicFlow is a clinic *operations* system. It deliberately provides **no diagno
 
 - **Authentication & roles** — JWT login; Admin / Doctor / Receptionist role-based access enforced at the backend.
 - **Patients** — registration, search/filtering, demographics, emergency contacts, medical notes & allergies, activate/deactivate.
+- **Patient medical history** — structured pre-treatment history per patient (allergies, chronic diseases, medications, surgeries, pregnancy/smoking/diabetes status, heart disease, blood thinners, anesthesia sensitivity, medical alerts, emergency contact), with a red risk banner on the patient, appointment, and visit pages. Editable by Admin/Doctor, view-only for Receptionist; audit-logged without the medical text; never included in WhatsApp reminders, printed documents, or reports.
 - **Doctors** — doctor profiles (specialty, license, bio) optionally linked to Doctor login accounts.
 - **Dental service catalog** — services with default prices and durations.
 - **Appointments** — booking with double-booking protection per doctor, status workflow (Scheduled → Arrived → InProgress → Completed / Cancelled / NoShow), per-role status transitions, cancellation with reason, plus a Day/Week calendar view alongside the classic list.
+- **WhatsApp appointment reminders** — Admin/Receptionist can generate a `wa.me` link with a pre-filled, editable EN/AR reminder message from the appointment list, calendar, or detail page, and open it in a new tab to send manually. No WhatsApp Business API, no automatic sending.
 - **Visits** — clinical record per appointment: chief complaint, diagnosis/treatment notes, tooth numbers, plain-text prescriptions, follow-up dates. Doctors can only work on their own visits.
 - **Invoices & payments** — invoices auto-filled from visits/appointments, discounts, partial payments, overpayment protection, derived payment status, auto-generated invoice numbers.
 - **Printable invoices & receipts** — clean, A4-friendly invoice and payment receipt documents with a Print / Save as PDF action (via the browser print dialog), RTL-aware for Arabic.
@@ -201,6 +203,8 @@ The demo deployment targets: **backend on Render** (Docker, see `backend/Dockerf
 - No refund/payment-correction endpoint (the `Refunded` status is manual bookkeeping only).
 - Opening hours in clinic settings are informational; bookings outside them are not blocked.
 - Single-clinic system — no multi-tenant support.
+- **WhatsApp reminders are manual only** — no WhatsApp Business API integration, no automatic/scheduled sending, and no record is kept of whether a reminder was actually sent (would need a schema change; see Future Improvements). Phone normalization targets Jordan mobile numbers (`07xxxxxxxx` / `+9627xxxxxxxx`) — other country formats are treated as invalid.
+- **Medical history is text and flags only** — no file uploads, lab records, scanned documents, or structured per-allergy tables; the patient form's legacy free-text medical notes/allergies fields still exist alongside the structured history.
 
 ## Screenshots
 
@@ -214,7 +218,7 @@ _Placeholder — add screenshots of the Dashboard, Patients, Appointments, Visit
 - Refresh tokens or sliding sessions.
 - Frontend test suite (the backend xUnit integration suite exists; frontend tests are still future work).
 - Payment corrections/refund workflow.
-- Appointment reminders (email/SMS).
+- Automatic/scheduled appointment reminders (email/SMS/WhatsApp Business API) and reminder-sent tracking — today's WhatsApp reminders are manual, staff-triggered `wa.me` links only (see Known Limitations).
 - Calendar Month view and drag-and-drop rescheduling (Day/Week calendar views exist today).
 - Enforce clinic opening hours at booking time.
 - Export reports to CSV/PDF.
