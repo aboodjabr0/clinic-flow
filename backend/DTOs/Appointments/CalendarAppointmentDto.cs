@@ -6,6 +6,7 @@ public class CalendarAppointmentDto
     public required Guid Id { get; init; }
     public required Guid PatientId { get; init; }
     public required string PatientFullName { get; init; }
+    public required string PatientPhoneNumber { get; init; }
     public required Guid DoctorProfileId { get; init; }
     public required string DoctorFullName { get; init; }
     public required Guid DentalServiceId { get; init; }

@@ -55,6 +55,21 @@ public class AppointmentsCalendarTests
     }
 
     [Fact]
+    public async Task GetCalendar_AsAdmin_IncludesPatientPhoneNumber()
+    {
+        var admin = await _factory.CreateClientForAsync(TestUsers.Admin);
+        var graph = await TestData.CreateAppointmentGraphAsync(admin);
+        var date = graph.Appointment.AppointmentDate;
+
+        var response = await admin.GetAsync(CalendarUrl(date, date));
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var items = await response.ReadDataAsync<List<CalendarAppointmentDto>>();
+        var calendarAppointment = Assert.Single(items, a => a.Id == graph.Appointment.Id);
+        Assert.Equal(graph.Patient.PhoneNumber, calendarAppointment.PatientPhoneNumber);
+    }
+
+    [Fact]
     public async Task GetCalendar_AsReceptionist_ReturnsAppointmentsInRange()
     {
         var admin = await _factory.CreateClientForAsync(TestUsers.Admin);
