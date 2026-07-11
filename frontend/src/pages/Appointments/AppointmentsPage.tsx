@@ -12,6 +12,7 @@ import { Textarea } from "../../components/common/Textarea";
 import { Modal } from "../../components/common/Modal";
 import { Pagination } from "../../components/common/Pagination";
 import { StatCard } from "../../components/dashboard/StatCard";
+import { AppointmentsCalendarView } from "./Calendar/AppointmentsCalendarView";
 import { appointmentsApi } from "../../api/appointmentsApi";
 import { visitsApi } from "../../api/visitsApi";
 import { doctorsApi } from "../../api/doctorsApi";
@@ -46,6 +47,7 @@ type ViewState =
   | { status: "loaded" };
 
 type StatusFilter = "all" | AppointmentStatus;
+type AppointmentsTab = "calendar" | "list";
 
 interface AppointmentFormState {
   patientId: string;
@@ -84,6 +86,11 @@ export function AppointmentsPage() {
   const canManageVisits = hasAnyRole(["Admin", "Doctor"]);
   const allowedStatuses = user ? getAllowedStatusTransitions(user.role) : [];
   const patientIdFilter = searchParams.get("patientId");
+
+  // Deep links from the patient details page filter by patientId, which the
+  // calendar endpoint doesn't support — land on List in that case so the
+  // filter still applies.
+  const [activeTab, setActiveTab] = useState<AppointmentsTab>(patientIdFilter ? "list" : "calendar");
 
   const [appointments, setAppointments] = useState<AppointmentListItem[]>([]);
   const [stats, setStats] = useState<AppointmentStats | null>(null);
@@ -167,8 +174,10 @@ export function AppointmentsPage() {
   }, []);
 
   useEffect(() => {
-    loadAppointments();
-  }, [loadAppointments]);
+    if (activeTab === "list") {
+      loadAppointments();
+    }
+  }, [loadAppointments, activeTab]);
 
   useEffect(() => {
     loadStats();
@@ -384,6 +393,35 @@ export function AppointmentsPage() {
         </div>
       )}
 
+      <div className="appointments-view-tabs">
+        <Button
+          type="button"
+          variant={activeTab === "calendar" ? "primary" : "secondary"}
+          onClick={() => setActiveTab("calendar")}
+        >
+          {t("appointments.calendarView")}
+        </Button>
+        <Button
+          type="button"
+          variant={activeTab === "list" ? "primary" : "secondary"}
+          onClick={() => setActiveTab("list")}
+        >
+          {t("appointments.listView")}
+        </Button>
+      </div>
+
+      {activeTab === "calendar" && (
+        <Card>
+          <AppointmentsCalendarView
+            doctors={doctors}
+            isDoctorRole={user?.role === "Doctor"}
+            canManageAppointments={canManageAppointments}
+            onEdit={openEditModalFor}
+          />
+        </Card>
+      )}
+
+      {activeTab === "list" && (
       <Card>
         {patientIdFilter && (
           <div className="appointments-patient-filter-banner">
@@ -546,6 +584,7 @@ export function AppointmentsPage() {
           </>
         )}
       </Card>
+      )}
 
       <Modal
         isOpen={isModalOpen}

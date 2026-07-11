@@ -26,6 +26,7 @@ export interface Invoice {
   visitId: string | null;
   dentalServiceId: string | null;
   serviceName: string | null;
+  doctorFullName: string | null;
   issueDate: string;
   dueDate: string | null;
   subtotalAmount: number;

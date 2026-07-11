@@ -6,6 +6,8 @@ import type {
   AppointmentListItem,
   AppointmentQuery,
   AppointmentStats,
+  CalendarAppointment,
+  CalendarQuery,
   CreateAppointmentRequest,
   UpdateAppointmentRequest,
   UpdateAppointmentStatusRequest,
@@ -26,6 +28,15 @@ function buildQueryString(query: AppointmentQuery): string {
 
   const queryString = params.toString();
   return queryString ? `?${queryString}` : "";
+}
+
+function buildCalendarQueryString(query: CalendarQuery): string {
+  const params = new URLSearchParams();
+  params.set("startDate", query.startDate);
+  params.set("endDate", query.endDate);
+  if (query.doctorId) params.set("doctorId", query.doctorId);
+  if (query.status) params.set("status", query.status);
+  return `?${params.toString()}`;
 }
 
 export const appointmentsApi = {
@@ -57,4 +68,9 @@ export const appointmentsApi = {
 
   getPatientAppointments: (patientId: string) =>
     apiClient.get<ApiEnvelope<AppointmentListItem[]>>(`/api/patients/${patientId}/appointments`),
+
+  getCalendarAppointments: (query: CalendarQuery) =>
+    apiClient.get<ApiEnvelope<CalendarAppointment[]>>(
+      `/api/appointments/calendar${buildCalendarQueryString(query)}`,
+    ),
 };

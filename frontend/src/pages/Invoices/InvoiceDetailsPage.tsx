@@ -135,18 +135,23 @@ export function InvoiceDetailsPage() {
         <div className="invoice-details-stack">
           <Card
             actions={
-              canManageInvoices ? (
-                <div className="invoice-details-actions">
-                  <Button variant="secondary" onClick={openEditModal}>
-                    {t("common.edit")}
-                  </Button>
-                  {invoice.remainingAmount > 0 && (
-                    <Button variant="primary" onClick={() => setIsPaymentModalOpen(true)}>
-                      {t("invoiceDetails.addPayment")}
+              <div className="invoice-details-actions">
+                <Button variant="secondary" onClick={() => navigate(`/invoices/${invoice.id}/print`)}>
+                  {t("invoicePrint.printInvoice")}
+                </Button>
+                {canManageInvoices && (
+                  <>
+                    <Button variant="secondary" onClick={openEditModal}>
+                      {t("common.edit")}
                     </Button>
-                  )}
-                </div>
-              ) : undefined
+                    {invoice.remainingAmount > 0 && (
+                      <Button variant="primary" onClick={() => setIsPaymentModalOpen(true)}>
+                        {t("invoiceDetails.addPayment")}
+                      </Button>
+                    )}
+                  </>
+                )}
+              </div>
             }
           >
             <div className="invoice-details-header">
@@ -261,6 +266,7 @@ export function InvoiceDetailsPage() {
                       <th>{t("table.reference")}</th>
                       <th>{t("table.recordedBy")}</th>
                       <th>{t("table.notes")}</th>
+                      <th>{t("common.actions")}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -272,6 +278,14 @@ export function InvoiceDetailsPage() {
                         <td>{payment.referenceNumber ?? "—"}</td>
                         <td>{payment.createdByUserName ?? "—"}</td>
                         <td>{payment.notes ?? "—"}</td>
+                        <td>
+                          <Link
+                            className="invoice-details-link"
+                            to={`/invoices/${invoice.id}/payments/${payment.id}/receipt`}
+                          >
+                            {t("invoicePrint.printReceipt")}
+                          </Link>
+                        </td>
                       </tr>
                     ))}
                   </tbody>

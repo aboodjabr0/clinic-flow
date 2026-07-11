@@ -16,7 +16,7 @@ Complete reference for every endpoint in the ClinicFlow backend (ASP.NET Core We
 | [Dental Services](#dental-services) | [api/dental-services.md](api/dental-services.md) | 5 |
 | [Clinic Settings](#clinic-settings) | [api/clinic-settings.md](api/clinic-settings.md) | 2 |
 | [Patients](#patients) | [api/patients.md](api/patients.md) | 6 |
-| [Appointments](#appointments) | [api/appointments.md](api/appointments.md) | 9 |
+| [Appointments](#appointments) | [api/appointments.md](api/appointments.md) | 10 |
 | [Visits](#visits) | [api/visits.md](api/visits.md) | 8 |
 | [Invoices & Payments](#invoices--payments) | [api/invoices.md](api/invoices.md) | 9 |
 | [Dashboard](#dashboard) | [api/dashboard.md](api/dashboard.md) | 6 |
@@ -24,7 +24,7 @@ Complete reference for every endpoint in the ClinicFlow backend (ASP.NET Core We
 | [Audit Logs](#audit-logs) | [api/audit-logs.md](api/audit-logs.md) | 2 |
 | [Users](#users) | [api/users.md](api/users.md) | 6 |
 
-**Total: 67 endpoints.**
+**Total: 68 endpoints.**
 
 ## Conventions
 
@@ -1143,6 +1143,72 @@ Success status code: `200 OK` — `ApiResponse<AppointmentListItemDto[]>`. Retur
 
 Error status codes: `401`, `403`.
 
+### GET /api/appointments/calendar
+
+Description:
+Returns an unpaginated, calendar-ready projection of appointments in a date range, for the Day/Week calendar view on the Appointments page. Excludes `notes` and `cancellationReason` (only list-safe fields are returned).
+
+Auth:
+Required.
+
+Allowed roles:
+Admin, Doctor, Receptionist.
+
+Query parameters:
+- `startDate`: required, `yyyy-MM-dd`.
+- `endDate`: required, `yyyy-MM-dd`, must be on or after `startDate`. Range capped at 62 days.
+- `doctorId`: optional GUID (doctor profile id). **Ignored for the Doctor role** — see below.
+- `status`: optional — one of the appointment statuses.
+
+Role behavior:
+- Admin/Receptionist: see all doctors by default; `doctorId` narrows to one doctor.
+- Doctor: always scoped to their own `DoctorProfile` (resolved server-side from the logged-in user's account link), regardless of any `doctorId` passed. A Doctor account with no linked `DoctorProfile` gets an empty result, not an error.
+
+Success status code: `200 OK` — `ApiResponse<CalendarAppointmentDto[]>`.
+
+Example request:
+
+```bash
+curl "http://localhost:5106/api/appointments/calendar?startDate=2026-07-06&endDate=2026-07-12" \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+Example response:
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+      "patientId": "8b7d2f10-1111-4562-b3fc-2c963f66afa6",
+      "patientFullName": "John Smith",
+      "doctorProfileId": "9c8e3a21-2222-4562-b3fc-2c963f66afa6",
+      "doctorFullName": "Dr. Sarah Mitchell",
+      "dentalServiceId": "1d9f4b32-3333-4562-b3fc-2c963f66afa6",
+      "serviceName": "Teeth Cleaning",
+      "appointmentDate": "2026-07-10",
+      "startTime": "09:00",
+      "endTime": "09:45",
+      "status": "Scheduled",
+      "reason": "Routine cleaning",
+      "hasVisit": false,
+      "invoiceStatus": null
+    }
+  ],
+  "message": null
+}
+```
+
+Error status codes:
+- `400 Bad Request` — "startDate and endDate are required."; "endDate must be on or after startDate."; "Date range cannot exceed 62 days."; "Invalid status filter."
+- `401 Unauthorized`, `403 Forbidden`.
+
+Notes/business rules:
+- This is a read-only addition alongside `GET /api/appointments` — it does not change that endpoint's behavior, request shape, or response shape.
+- `hasVisit` is `true` if a Visit record exists for the appointment (no clinical detail is exposed). `invoiceStatus` is the most recent invoice's payment status for the appointment (`Unpaid`/`PartiallyPaid`/`Paid`/`Refunded`), or `null` if no invoice exists.
+- Not audit-logged (read-only, like the other appointment GET endpoints).
+
 ### POST /api/appointments
 
 Description:
@@ -1682,11 +1748,13 @@ Admin, Doctor, Receptionist.
 Route parameters:
 - `id`: GUID of the invoice.
 
-Success status code: `200 OK` — `ApiResponse<InvoiceDto>` (includes `payments: PaymentDto[]`, each with amount, date, method, reference, notes, and the recording user's name).
+Success status code: `200 OK` — `ApiResponse<InvoiceDto>` (includes `payments: PaymentDto[]`, each with amount, date, method, reference, notes, and the recording user's name; also includes `doctorFullName`, resolved from the linked visit's doctor, falling back to the linked appointment's doctor, or `null` if neither is linked).
 
 Error status codes:
 - `401`, `403`.
 - `404 Not Found` — "Invoice not found."
+
+Used by the frontend's printable invoice (`/invoices/:id/print`) and payment receipt (`/invoices/:invoiceId/payments/:paymentId/receipt`) pages — no separate print/PDF endpoint exists; those pages reuse this response plus `GET /api/clinic-settings` for the clinic header, and render browser-printable HTML (see [USER_GUIDE.md](USER_GUIDE.md)).
 
 ### GET /api/patients/{patientId}/invoices
 

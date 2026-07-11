@@ -123,4 +123,49 @@ public class InvoicesTests
         Assert.Equal(100m, updated.PaidAmount);
         Assert.Equal(0m, updated.RemainingAmount);
     }
+
+    [Fact]
+    public async Task GetById_LinkedToAppointment_IncludesDoctorFullName()
+    {
+        var admin = await _factory.CreateClientForAsync(TestUsers.Admin);
+        var graph = await TestData.CreateAppointmentGraphAsync(admin);
+
+        var response = await admin.PostAsJsonAsync("/api/invoices", new CreateInvoiceDto
+        {
+            AppointmentId = graph.Appointment.Id,
+            SubtotalAmount = 100m
+        });
+        response.EnsureSuccessStatusCode();
+        var invoice = await response.ReadDataAsync<InvoiceDto>();
+
+        Assert.NotNull(invoice.DoctorFullName);
+        Assert.StartsWith("Dr. Test", invoice.DoctorFullName);
+    }
+
+    [Fact]
+    public async Task GetById_NotLinkedToAppointmentOrVisit_DoctorFullNameIsNull()
+    {
+        var admin = await _factory.CreateClientForAsync(TestUsers.Admin);
+        var patient = await TestData.CreatePatientAsync(admin);
+        var invoice = await TestData.CreateInvoiceAsync(admin, patient.Id);
+
+        Assert.Null(invoice.DoctorFullName);
+    }
+
+    [Fact]
+    public async Task GetById_AsDoctor_CanViewFullFinancialDetails()
+    {
+        var admin = await _factory.CreateClientForAsync(TestUsers.Admin);
+        var patient = await TestData.CreatePatientAsync(admin);
+        var invoice = await TestData.CreateInvoiceAsync(admin, patient.Id, subtotal: 100m);
+        await TestData.AddPaymentAsync(admin, invoice.Id, 40m);
+
+        var doctor = await _factory.CreateClientForAsync(TestUsers.Doctor);
+        var response = await doctor.GetAsync($"/api/invoices/{invoice.Id}");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var fetched = await response.ReadDataAsync<InvoiceDto>();
+        Assert.Equal(40m, fetched.PaidAmount);
+        Assert.Single(fetched.Payments);
+    }
 }

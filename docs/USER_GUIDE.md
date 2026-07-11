@@ -24,6 +24,24 @@ Signing in: open the app, enter your email and password. Sessions last 60 minute
 
 ---
 
+## Appointments: Calendar and List views
+
+The Appointments page (`/appointments`) offers two ways to see the schedule, switched with the **Calendar View / List View** toggle at the top of the page. Both views show the same underlying appointments and stay in sync — the toggle is purely a display preference, not separate data.
+
+**Calendar View** (the default) is built for day-to-day scheduling:
+- **Day** and **Week** layouts — Day shows a single day's appointments grouped by hour; Week shows all seven days side by side (stacking into a vertical list on narrow/mobile screens).
+- **Today** / **◄** / **►** buttons and a date picker to move around, plus a label showing the currently selected day or week range.
+- **Filter by doctor** (Admin/Receptionist only — see below) and **filter by status**.
+- Each appointment card shows the patient, doctor, service, time, and status (with a colored status indicator, never color alone), plus a checkmark if a visit has already been recorded for it.
+- Click a card's **View details** to open the full appointment page, or **Reschedule/Edit** (Admin/Receptionist only) to open the same edit form used in List View.
+- Supports Arabic/RTL and dark mode like the rest of the app.
+
+**List View** is the original table: full-text search, single-date filter, pagination, and inline status-change controls — unchanged from before. Deep links from a patient's page (`View appointments`) open directly into List View, pre-filtered to that patient, since the calendar doesn't filter by patient.
+
+**Doctor filtering**: Admin and Receptionist can filter either view by any doctor, or view all doctors at once. A Doctor login never sees the doctor filter — they only ever see their own appointments, and this is enforced by the backend (not just hidden in the UI), so a Doctor account cannot see another doctor's schedule by any means.
+
+---
+
 ## Admin
 
 The Admin sees and manages everything.
@@ -49,7 +67,7 @@ Every create, edit, activate/deactivate, and password reset is recorded in the A
 
 **Patients** — everything a receptionist can do (below).
 
-**Appointments** — everything a receptionist can do, plus set *any* appointment status directly.
+**Appointments** — everything a receptionist can do, plus set *any* appointment status directly. See **Appointments: Calendar and List views** below.
 
 **Visits** — view all visits, and start/update/complete any visit regardless of doctor (useful for corrections).
 
@@ -67,9 +85,11 @@ The Receptionist runs the front desk: patients, scheduling, and money.
 
 **Patients** — register new patients (name, phone, gender required; email, date of birth, address, emergency contact, medical notes, and allergies optional), search and filter the list, edit records, and deactivate patients who leave the practice. The patient detail page shows their appointment, visit, and invoice history.
 
-**Appointments** — book appointments by choosing patient, doctor, service, date, and time. The system blocks double-booking a doctor and past-dated bookings; a cancelled slot can be rebooked. Day to day: mark patients **Arrived** when they check in, mark **NoShow**, reschedule, and cancel with a reason. (Moving an appointment to In Progress/Completed happens through the doctor's visit workflow.)
+**Appointments** — book appointments by choosing patient, doctor, service, date, and time. The system blocks double-booking a doctor and past-dated bookings; a cancelled slot can be rebooked. Day to day: mark patients **Arrived** when they check in, mark **NoShow**, reschedule, and cancel with a reason. (Moving an appointment to In Progress/Completed happens through the doctor's visit workflow.) See **Appointments: Calendar and List views** below.
 
 **Invoices & payments** — create invoices, usually from a completed visit (patient, service, and price fill in automatically); apply a discount (only until the first payment is recorded); set a due date. Record payments (cash, card, bank transfer, CliQ, other) — partial payments are supported, overpayment is blocked, and the invoice status updates automatically (Unpaid → PartiallyPaid → Paid).
+
+**Printing invoices & receipts** — from an invoice's detail page, use **Print Invoice** for a clean, A4-friendly invoice document, or **Print Receipt** next to any payment row for that payment's receipt. Both open a standalone print preview; use the **Save as PDF** button (or your browser's print dialog) to print or save a PDF. This uses the browser's native print/PDF support — there is no separate server-generated PDF file. The preview follows the current UI language, including right-to-left layout for Arabic.
 
 **Reports** — appointment, revenue, and patient reports over any date range.
 
@@ -89,7 +109,7 @@ The Doctor's view is scoped: their dashboard, visits, and reports cover only app
 
 **Patients** — view the full patient list and each patient's record, including medical notes, allergies, and their appointment/visit history. Doctors cannot create or edit patient records — ask reception.
 
-**Appointments** — view the schedule. Doctors don't book or cancel; they act on appointments through visits.
+**Appointments** — view the schedule. Doctors don't book or cancel; they act on appointments through visits. The doctor filter is hidden — a Doctor login always sees only their own appointments, in both Calendar and List views. See **Appointments: Calendar and List views** below.
 
 **Visits (start → notes → complete)** — the core doctor workflow:
 
@@ -99,6 +119,6 @@ The Doctor's view is scoped: their dashboard, visits, and reports cover only app
 
 Prescriptions are simple free-text notes written by the doctor — ClinicFlow provides no diagnosis or treatment suggestions of any kind.
 
-**Invoices (view only)** — doctors can open a patient's or visit's invoice to see billing status, but cannot create invoices or record payments.
+**Invoices (view only)** — doctors can open a patient's or visit's invoice to see billing status, but cannot create invoices or record payments. Doctors can use **Print Invoice** and **Print Receipt**, same as viewing — printing does not expose anything beyond what the invoice detail page already shows them.
 
 **Restricted financial visibility** — by design, Doctor logins get no revenue dashboard, no revenue/patient reports (the appointments report is available, limited to their own appointments), and null financial fields on the dashboard summary. This is enforced by the backend, not just hidden in the UI.

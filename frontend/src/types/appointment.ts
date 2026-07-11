@@ -76,3 +76,27 @@ export interface AppointmentStats {
   completedAppointments: number;
   cancelledOrNoShowAppointments: number;
 }
+
+export interface CalendarAppointment {
+  id: string;
+  patientId: string;
+  patientFullName: string;
+  doctorProfileId: string;
+  doctorFullName: string;
+  dentalServiceId: string;
+  serviceName: string;
+  appointmentDate: string;
+  startTime: string;
+  endTime: string;
+  status: AppointmentStatus;
+  reason: string | null;
+  hasVisit: boolean;
+  invoiceStatus: string | null;
+}
+
+export interface CalendarQuery {
+  startDate: string;
+  endDate: string;
+  doctorId?: string;
+  status?: AppointmentStatus;
+}

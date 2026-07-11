@@ -118,11 +118,13 @@ Admin, Doctor, Receptionist.
 Route parameters:
 - `id`: GUID of the invoice.
 
-Success status code: `200 OK` — `ApiResponse<InvoiceDto>` (includes `payments: PaymentDto[]`, each with amount, date, method, reference, notes, and the recording user's name).
+Success status code: `200 OK` — `ApiResponse<InvoiceDto>` (includes `payments: PaymentDto[]`, each with amount, date, method, reference, notes, and the recording user's name; also includes `doctorFullName`, resolved from the linked visit's doctor, falling back to the linked appointment's doctor, or `null` if neither is linked).
 
 Error status codes:
 - `401`, `403`.
 - `404 Not Found` — "Invoice not found."
+
+Used by the frontend's printable invoice (`/invoices/:id/print`) and payment receipt (`/invoices/:invoiceId/payments/:paymentId/receipt`) pages — no separate print/PDF endpoint exists; those pages reuse this response plus `GET /api/clinic-settings` for the clinic header, and render browser-printable HTML (see [../USER_GUIDE.md](../USER_GUIDE.md)).
 
 ## GET /api/patients/{patientId}/invoices
 

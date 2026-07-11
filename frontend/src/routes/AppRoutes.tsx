@@ -12,6 +12,8 @@ import { VisitsPage } from "../pages/Visits/VisitsPage";
 import { VisitDetailsPage } from "../pages/Visits/VisitDetailsPage";
 import { InvoicesPage } from "../pages/Invoices/InvoicesPage";
 import { InvoiceDetailsPage } from "../pages/Invoices/InvoiceDetailsPage";
+import { InvoicePrintPage } from "../pages/Invoices/Print/InvoicePrintPage";
+import { ReceiptPrintPage } from "../pages/Invoices/Print/ReceiptPrintPage";
 import { ReportsPage } from "../pages/Reports/ReportsPage";
 import { SettingsPage } from "../pages/Settings/SettingsPage";
 import { AuditLogsPage } from "../pages/AuditLogs/AuditLogsPage";
@@ -24,6 +26,23 @@ export function AppRoutes() {
     <Routes>
       <Route path="/login" element={<LoginPage />} />
       <Route path="/access-denied" element={<AccessDeniedPage />} />
+
+      <Route
+        path="/invoices/:id/print"
+        element={
+          <ProtectedRoute>
+            <InvoicePrintPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/invoices/:invoiceId/payments/:paymentId/receipt"
+        element={
+          <ProtectedRoute>
+            <ReceiptPrintPage />
+          </ProtectedRoute>
+        }
+      />
 
       <Route
         element={

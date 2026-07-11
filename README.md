@@ -22,9 +22,10 @@ ClinicFlow is a clinic *operations* system. It deliberately provides **no diagno
 - **Patients** — registration, search/filtering, demographics, emergency contacts, medical notes & allergies, activate/deactivate.
 - **Doctors** — doctor profiles (specialty, license, bio) optionally linked to Doctor login accounts.
 - **Dental service catalog** — services with default prices and durations.
-- **Appointments** — booking with double-booking protection per doctor, status workflow (Scheduled → Arrived → InProgress → Completed / Cancelled / NoShow), per-role status transitions, cancellation with reason.
+- **Appointments** — booking with double-booking protection per doctor, status workflow (Scheduled → Arrived → InProgress → Completed / Cancelled / NoShow), per-role status transitions, cancellation with reason, plus a Day/Week calendar view alongside the classic list.
 - **Visits** — clinical record per appointment: chief complaint, diagnosis/treatment notes, tooth numbers, plain-text prescriptions, follow-up dates. Doctors can only work on their own visits.
 - **Invoices & payments** — invoices auto-filled from visits/appointments, discounts, partial payments, overpayment protection, derived payment status, auto-generated invoice numbers.
+- **Printable invoices & receipts** — clean, A4-friendly invoice and payment receipt documents with a Print / Save as PDF action (via the browser print dialog), RTL-aware for Arabic.
 - **Dashboard** — headline stats, today's schedule, status breakdown, recent activity, upcoming follow-ups, revenue charts (financials hidden from Doctors).
 - **Reports** — appointment, revenue, and patient reports over date ranges.
 - **Audit logs** — Admin-only trail of logins and all significant actions, with no clinical text, passwords, or tokens recorded.
@@ -213,6 +214,7 @@ _Placeholder — add screenshots of the Dashboard, Patients, Appointments, Visit
 - Refresh tokens or sliding sessions.
 - Frontend test suite (the backend xUnit integration suite exists; frontend tests are still future work).
 - Payment corrections/refund workflow.
-- Appointment reminders (email/SMS) and a calendar view.
+- Appointment reminders (email/SMS).
+- Calendar Month view and drag-and-drop rescheduling (Day/Week calendar views exist today).
 - Enforce clinic opening hours at booking time.
 - Export reports to CSV/PDF.

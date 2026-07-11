@@ -14,6 +14,7 @@ public class InvoiceDto
 
     public Guid? DentalServiceId { get; init; }
     public string? ServiceName { get; init; }
+    public string? DoctorFullName { get; init; }
 
     public required DateOnly IssueDate { get; init; }
     public DateOnly? DueDate { get; init; }
